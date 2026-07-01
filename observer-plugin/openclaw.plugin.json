@@ -1,0 +1,12 @@
+{
+  "id": "redteam-observer",
+  "name": "Red Team Observer",
+  "description": "Records tool call events for security red team validation.",
+  "version": "0.2.0",
+  "main": "./dist/index.js",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

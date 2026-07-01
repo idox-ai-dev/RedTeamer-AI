@@ -1,0 +1,26 @@
+FROM ghcr.io/openclaw/openclaw:latest
+
+USER root
+
+# Python for attack-agent + mock-payment-mcp (spawned as subprocess by openclaw --local)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends python3 python3-venv python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+
+# mock-payment-mcp — same path as registered in openclaw.json via entrypoint
+COPY mock-payment-mcp /opt/mock-payment-mcp
+RUN python3 -m venv /opt/mcp-venv && \
+    /opt/mcp-venv/bin/pip install --quiet --no-cache-dir mcp==1.9.4
+
+# attack-agent Python service (new-ux version)
+COPY cloud-redteam/attack-agent /opt/attack-agent
+RUN python3 -m venv /opt/attack-agent/.venv && \
+    /opt/attack-agent/.venv/bin/pip install --quiet --no-cache-dir \
+      -r /opt/attack-agent/requirements.txt
+
+RUN chown -R node:node /opt/mock-payment-mcp /opt/mcp-venv /opt/attack-agent
+
+USER node
+WORKDIR /opt/attack-agent
+
+CMD ["/opt/attack-agent/.venv/bin/python", "main.py"]

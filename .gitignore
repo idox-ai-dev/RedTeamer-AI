@@ -1,0 +1,63 @@
+# ── Credentials & secrets ─────────────────────────────────────────
+.env
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+.Python
+
+# ── Node / TypeScript ─────────────────────────────────────────────
+node_modules/
+dist/
+*.js.map
+*.d.ts
+
+# ── Reports & generated output ────────────────────────────────────
+reports/
+audit/
+*.jsonl
+*.log
+
+# ── macOS ─────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── IDE ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Observer runtime data ─────────────────────────────────────────
+scenarios_backup
+!observer-plugin/dist/
+!observer-plugin/dist/index.js
+config.*
+
+# ── Databases ─────────────────────────────────────────────────────
+*.db
+*.sqlite
+
+# ── Generated scenarios ───────────────────────────────────────────
+cloud-redteam/api-server/scenarios/generated/
+
+# ── Kubernetes local secrets ──────────────────────────────────────
+*.local.yaml
+
+# ── Third-party proprietary tools (not part of this project) ─────
+
+# ── Local editor / tool settings ─────────────────────────────────
+.claude/settings.local.json

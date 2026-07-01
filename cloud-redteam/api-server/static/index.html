@@ -1,0 +1,2243 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" class="idox-dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iDox.ai Red Team — Agent Red Team Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Roboto:wght@400;500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Design Tokens ───────────────────────────────────────────── */
+:root {
+  --font-display: "Poppins", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans:    "Poppins", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body:    "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+  --radius-xs: 4px; --radius-sm: 8px; --radius-md: 12px;
+  --radius-lg: 16px; --radius-btn: 24px; --radius-pill: 9999px;
+}
+.idox-dark {
+  --d-bg:           #00111F;
+  --d-bg-2:         #051B30;
+  --d-surface:      #07223C;
+  --d-surface-2:    #0C2D4E;
+  --d-surface-3:    #123A61;
+  --d-overlay:      rgba(0,10,22,0.72);
+  --d-blue:         #2F86FF;
+  --d-blue-strong:  #0066FF;
+  --d-blue-hover:   #4D94FF;
+  --d-blue-soft:    rgba(47,134,255,0.14);
+  --d-blue-softer:  rgba(47,134,255,0.08);
+  --d-cyan:         #29A6FF;
+  --d-text:         #EAF2FB;
+  --d-text-2:       #A6BBD0;
+  --d-text-3:       #74899F;
+  --d-text-muted:   #5A7088;
+  --d-border:       rgba(255,255,255,0.10);
+  --d-border-2:     rgba(255,255,255,0.16);
+  --d-border-focus: #2F86FF;
+  --d-success:      #2ED5A6;
+  --d-success-soft: rgba(46,213,166,0.14);
+  --d-warning:      #FBB13C;
+  --d-warning-soft: rgba(251,177,60,0.14);
+  --d-danger:       #FF6B5E;
+  --d-danger-soft:  rgba(255,107,94,0.14);
+  --d-shadow-card:  0 8px 24px rgba(0,0,0,0.45);
+  --d-shadow-cta:   0 10px 28px rgba(0,102,255,0.35);
+  --d-ring-focus:   0 0 0 3px rgba(47,134,255,0.22);
+  --d-glow-blue:    0 0 28px rgba(47,134,255,0.30);
+}
+
+body { background: var(--d-bg); color: var(--d-text); font: 400 14px/1.5 var(--font-body); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+
+/* ── Scrollbar ── */
+* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.12) transparent; }
+*::-webkit-scrollbar { width: 6px; }
+*::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 4px; }
+
+/* ── Login ────────────────────────────────────────────────────── */
+#login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--d-bg); }
+.lc { background: var(--d-surface); border: 1px solid var(--d-border); border-radius: 20px; padding: 44px; width: 420px; box-shadow: var(--d-shadow-card); }
+.lc-brand { display: flex; align-items: center; gap: 11px; margin-bottom: 32px; }
+.lc-icon { width: 40px; height: 40px; border-radius: 11px; background: linear-gradient(135deg,#0066FF,#29A6FF); display: flex; align-items: center; justify-content: center; box-shadow: var(--d-glow-blue); flex-shrink: 0; }
+.lc-name-sub { font: 500 10px/1 var(--font-mono); color: var(--d-text-3); letter-spacing: .14em; text-transform: uppercase; }
+.lc-name-main { font: 700 16px/1.2 var(--font-display); color: var(--d-text); margin-top: 3px; }
+.lc-name-main b { color: var(--d-cyan); }
+.lc h2 { font: 700 24px/1.15 var(--font-display); color: #fff; letter-spacing: -.02em; margin-bottom: 8px; }
+.lc p { font: 400 13.5px/1.5 var(--font-sans); color: var(--d-text-3); margin-bottom: 28px; }
+.rt-field { margin-bottom: 18px; }
+.rt-field label { display: block; font: 600 11.5px/1 var(--font-sans); color: var(--d-text-2); margin-bottom: 7px; letter-spacing: .02em; }
+.rt-input { height: 46px; padding: 0 14px; width: 100%; background: var(--d-surface-3); border: 1px solid var(--d-border-2); border-radius: 10px; color: var(--d-text); font: 400 13.5px/1 var(--font-sans); outline: none; transition: border-color .15s, box-shadow .15s, background .15s; }
+.rt-input:focus { border-color: var(--d-blue); box-shadow: var(--d-ring-focus); background: var(--d-surface-2); }
+.rt-input::placeholder { color: var(--d-text-muted); }
+.rt-field-hint { font: 400 11.5px/1.3 var(--font-sans); color: var(--d-text-3); margin-top: 6px; }
+.rt-field .req { color: var(--d-danger); font-weight: 700; }
+.rt-err { color: var(--d-danger); font: 400 12.5px/1 var(--font-sans); margin-top: 10px; }
+
+/* ── Buttons ──────────────────────────────────────────────────── */
+.rt-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: var(--radius-btn); font: 700 13px/1 var(--font-display); letter-spacing: .02em; height: 42px; padding: 0 22px; cursor: pointer; transition: background .15s, box-shadow .2s, transform .1s, opacity .15s; white-space: nowrap; }
+.rt-btn:active { transform: translateY(1px); }
+.rt-btn:disabled { opacity: .45; pointer-events: none; }
+.rt-btn-primary { background: var(--d-blue-strong); color: #fff; box-shadow: var(--d-shadow-cta); }
+.rt-btn-primary:hover { background: var(--d-blue-hover); }
+.rt-btn-ghost { background: rgba(255,255,255,.05); color: var(--d-text); border: 1px solid var(--d-border-2); }
+.rt-btn-ghost:hover { background: rgba(255,255,255,.1); }
+.rt-btn-danger { background: var(--d-danger); color: #2A0905; font-weight: 700; box-shadow: 0 8px 20px rgba(255,107,94,.28); }
+.rt-btn-danger:hover { filter: brightness(1.06); }
+.rt-btn-sm { height: 34px; padding: 0 14px; font-size: 12px; }
+.rt-btn-full { width: 100%; }
+
+/* ── App Shell ────────────────────────────────────────────────── */
+#app { display: none; height: 100vh; overflow: hidden; }
+#app.show { display: flex; }
+
+.rt-side {
+  width: 256px; flex: 0 0 256px;
+  background: linear-gradient(180deg, #061B30 0%, #03131F 100%);
+  border-right: 1px solid var(--d-border);
+  display: flex; flex-direction: column; padding: 22px 16px;
+}
+.rt-brand { display: flex; align-items: center; gap: 11px; padding: 6px 8px 22px; }
+.rt-brand .mark { width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0; background: linear-gradient(135deg,#0066FF,#29A6FF); display: flex; align-items: center; justify-content: center; box-shadow: var(--d-glow-blue); position: relative; }
+.rt-brand .rt-pip { position: absolute; right: -3px; top: -3px; width: 11px; height: 11px; border-radius: 50%; background: var(--d-danger); border: 2px solid #061B30; }
+.rt-brand .bt { font: 700 15px/1.1 var(--font-display); color: #fff; letter-spacing: -.01em; margin-top: 3px; }
+.rt-brand .bt b { color: var(--d-cyan); }
+.rt-brand .bs { font: 500 10px/1.2 var(--font-mono); color: var(--d-text-3); letter-spacing: .16em; text-transform: uppercase; }
+.rt-nav-label { font: 600 10px/1 var(--font-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--d-text-muted); padding: 14px 12px 8px; }
+.rt-nav { display: flex; flex-direction: column; gap: 3px; }
+.rt-nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 10px; border: 0; background: transparent; width: 100%; text-align: left; color: var(--d-text-2); font: 500 13.5px/1 var(--font-sans); cursor: pointer; transition: background .14s, color .14s; position: relative; }
+.rt-nav-item:hover { background: rgba(255,255,255,.05); color: var(--d-text); }
+.rt-nav-item.on { background: var(--d-blue-soft); color: #fff; }
+.rt-nav-item.on::before { content: ""; position: absolute; left: -16px; top: 50%; transform: translateY(-50%); width: 3px; height: 22px; border-radius: 0 3px 3px 0; background: var(--d-blue); }
+.rt-nav-item .ni { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.rt-nav-item .nb { margin-left: auto; font: 700 10px/1 var(--font-mono); padding: 3px 7px; border-radius: 9999px; background: rgba(255,255,255,.08); color: var(--d-text-3); }
+.rt-nav-item.on .nb { background: var(--d-blue); color: #fff; }
+.rt-side-foot { margin-top: auto; padding-top: 16px; }
+.rt-status-card { background: rgba(255,255,255,.04); border: 1px solid var(--d-border); border-radius: 12px; padding: 13px 14px; }
+.rt-status-card .sr { display: flex; align-items: center; gap: 8px; font: 600 12px/1 var(--font-sans); color: var(--d-text); }
+.rt-status-card .live { width: 8px; height: 8px; border-radius: 50%; background: var(--d-success); box-shadow: 0 0 0 3px rgba(46,213,166,.2); animation: rt-pulse 1.8s ease infinite; }
+.rt-status-card .sd { font: 400 11px/1.4 var(--font-sans); color: var(--d-text-3); margin-top: 6px; }
+@keyframes rt-pulse { 0%,70%{opacity:1}85%{opacity:.3}100%{opacity:1} }
+.rt-user { display: flex; align-items: center; gap: 10px; padding: 12px 6px 0; margin-top: 12px; }
+.rt-user .av { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#9A6BFF,#0066FF); display: flex; align-items: center; justify-content: center; color: #fff; font: 700 12px/1 var(--font-display); flex-shrink: 0; }
+.rt-user .un { font: 600 12px/1.2 var(--font-sans); color: var(--d-text); }
+.rt-user .ue { font: 400 10px/1.2 var(--font-mono); color: var(--d-text-3); }
+
+.rt-main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.rt-topbar { display: flex; align-items: center; gap: 18px; padding: 18px 32px; border-bottom: 1px solid var(--d-border); background: rgba(5,27,48,.55); backdrop-filter: blur(12px); flex-shrink: 0; }
+.rt-topbar .tt { font: 700 19px/1.1 var(--font-display); color: #fff; letter-spacing: -.01em; }
+.rt-topbar .ts { font: 400 12.5px/1.3 var(--font-sans); color: var(--d-text-3); margin-top: 3px; }
+.rt-topbar .spacer { flex: 1; }
+.rt-content { flex: 1; overflow-y: auto; padding: 28px 32px 64px; }
+.rt-content-inner { max-width: 1120px; margin: 0 auto; }
+
+/* ── Pages ──────────────────────────────────────────────────── */
+.rt-page { display: none; }
+.rt-page.active { display: block; }
+
+/* ── Cards ──────────────────────────────────────────────────── */
+.rt-card { background: var(--d-surface); border: 1px solid var(--d-border); border-radius: 16px; padding: 20px 22px; }
+.rt-card-h { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.rt-card-h .ct { font: 700 15px/1.2 var(--font-display); color: var(--d-text); }
+.rt-card-h .cs { font: 400 11.5px/1.3 var(--font-sans); color: var(--d-text-3); margin-top: 2px; }
+.rt-card-h .spacer { flex: 1; }
+.rt-section-title { font: 600 11px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--d-text-muted); margin: 0 0 14px; }
+
+/* ── KPI grid ───────────────────────────────────────────────── */
+.rt-kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 22px; }
+.rt-kpi { background: var(--d-surface); border: 1px solid var(--d-border); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; }
+.rt-kpi::after { content:""; position:absolute; right:-30px; top:-30px; width:120px; height:120px; border-radius:50%; background:radial-gradient(circle, var(--g,rgba(47,134,255,.14)), transparent 70%); pointer-events:none; }
+.rt-kpi .kic { width:40px; height:40px; border-radius:11px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:14px; }
+.rt-kpi .kv { font: 800 32px/1 var(--font-display); letter-spacing: -.02em; color: #fff; }
+.rt-kpi .kl { font: 500 12.5px/1.3 var(--font-sans); color: var(--d-text-3); margin-top: 7px; }
+
+/* ── Activity feed ──────────────────────────────────────────── */
+.rt-feed { display: flex; flex-direction: column; }
+.rt-feed-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--d-border); align-items: center; cursor: pointer; transition: background .12s; }
+.rt-feed-item:last-child { border-bottom: 0; }
+.rt-feed-item:hover { background: var(--d-blue-softer); border-radius: 8px; padding-left: 8px; padding-right: 8px; }
+.rt-feed-item .fi { width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.rt-feed-item .fmid { flex: 1; min-width: 0; }
+.rt-feed-item .ft { font: 600 12.5px/1.35 var(--font-sans); color: var(--d-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rt-feed-item .fm { font: 400 11px/1.3 var(--font-mono); color: var(--d-text-3); margin-top: 3px; display: flex; gap: 6px; flex-wrap: wrap; }
+.rt-feed-item .fs { margin-left: auto; flex-shrink: 0; }
+
+/* ── Grid layouts ───────────────────────────────────────────── */
+.rt-grid-2 { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; margin-bottom: 22px; }
+
+/* ── Pills ──────────────────────────────────────────────────── */
+.rt-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 9999px; font: 700 10.5px/1 var(--font-sans); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.rt-pill .d { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.rt-pill.running  { background: var(--d-warning-soft);  color: var(--d-warning); }
+.rt-pill.completed{ background: var(--d-success-soft);  color: var(--d-success); }
+.rt-pill.failed   { background: var(--d-danger-soft);   color: var(--d-danger); }
+.rt-pill.pending  { background: var(--d-blue-soft);     color: var(--d-blue); }
+.rt-pill.attacked { background: var(--d-danger-soft);   color: var(--d-danger); }
+.rt-pill.defended { background: var(--d-success-soft);  color: var(--d-success); }
+.rt-pill.low      { background: var(--d-success-soft);  color: var(--d-success); }
+.rt-pill.medium   { background: var(--d-warning-soft);  color: var(--d-warning); }
+.rt-pill.high     { background: var(--d-danger-soft);   color: var(--d-danger); }
+/* ── Score Ring ─────────────────────────────────────────────── */
+.rt-ring { position: relative; width: 56px; height: 56px; flex: 0 0 auto; }
+.rt-ring svg { display: block; }
+.rv { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 800 15px/1 var(--font-display); color: #fff; }
+.rt-tag { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 6px; font: 500 11px/1 var(--font-mono); background: rgba(255,255,255,.06); color: var(--d-text-2); border: 1px solid var(--d-border); }
+
+/* ── Scan testing Page ─────────────────────────────────────── */
+.rt-at-card { padding: 24px 26px; }
+.rt-at-head { display: flex; align-items: flex-start; gap: 13px; margin-bottom: 20px; }
+.rt-at-num { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--d-blue-soft); color: var(--d-blue); font: 700 14px/1 var(--font-display); }
+.rt-at-num.danger { background: rgba(255,107,94,.14); color: var(--d-danger); }
+.rt-at-title { font: 700 17px/1.2 var(--font-display); color: var(--d-text); }
+.rt-at-sub { font: 400 12.5px/1.4 var(--font-sans); color: var(--d-text-3); margin-top: 4px; }
+.rt-at-grid1 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 700px) { .rt-at-grid1 { grid-template-columns: 1fr; } }
+.rt-at-note { display: flex; align-items: flex-start; gap: 9px; margin-top: 18px; padding: 12px 14px; border-radius: 10px; background: var(--d-surface-2); border: 1px solid var(--d-border); color: var(--d-text-3); font: 400 12.5px/1.5 var(--font-sans); }
+.rt-at-bulk { display: flex; gap: 8px; margin-bottom: 14px; }
+.rt-bulk { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 9px; border: 1px solid var(--d-border-2); background: var(--d-surface-3); color: var(--d-text-2); font: 600 12px/1 var(--font-sans); cursor: pointer; transition: background .14s; }
+.rt-bulk:hover { background: var(--d-surface-2); color: var(--d-text); }
+
+/* ── Scenario list ──────────────────────────────────────────── */
+.rt-strat-list { display: flex; flex-direction: column; gap: 10px; }
+.rt-strat { border: 1px solid var(--d-border); border-radius: 13px; background: var(--d-surface); transition: border-color .15s, background .15s; }
+.rt-strat.sel { border-color: var(--d-blue); background: var(--d-blue-softer); }
+.rt-strat-row { display: flex; align-items: center; gap: 14px; padding: 15px 18px; cursor: pointer; }
+.rt-strat-cb { width: 22px; height: 22px; flex-shrink: 0; border-radius: 7px; border: 1.5px solid var(--d-border-2); background: var(--d-surface-3); display: flex; align-items: center; justify-content: center; color: #fff; transition: all .14s; }
+.rt-strat-cb.on { background: var(--d-blue); border-color: var(--d-blue); }
+.rt-strat-ic { width: 40px; height: 40px; flex-shrink: 0; border-radius: 11px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.05); color: var(--d-text-2); }
+.rt-strat.sel .rt-strat-ic { background: var(--d-blue-soft); color: var(--d-blue); }
+.rt-strat-name { font: 700 15px/1.2 var(--font-display); color: var(--d-text); }
+.rt-strat-key { font: 500 11px/1 var(--font-mono); color: var(--d-text-muted); margin-top: 4px; }
+.rt-strat-main { flex: 1; min-width: 0; }
+.rt-strat-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 9999px; font: 600 10.5px/1 var(--font-sans); background: var(--d-surface-3); color: var(--d-text-3); border: 1px solid var(--d-border-2); margin-top: 5px; }
+.rt-strat-badge.gen { background: rgba(154,107,255,.14); color: #9A6BFF; border-color: rgba(154,107,255,.25); }
+.rt-strat-info { flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; border: 0; background: transparent; color: var(--d-text-3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .12s, color .12s; }
+.rt-strat-info:hover { background: rgba(255,255,255,.07); color: var(--d-text); }
+
+/* ── Scenario detail modal ───────────────────────────────────── */
+.rt-sc-modal-overlay { position: fixed; inset: 0; z-index: 200; background: var(--d-overlay); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.rt-sc-modal { background: var(--d-surface); border: 1px solid var(--d-border-2); border-radius: 18px; width: 100%; max-width: 560px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 24px 60px rgba(0,0,0,.6); }
+.rt-sc-modal-head { display: flex; align-items: flex-start; gap: 12px; padding: 22px 24px 18px; border-bottom: 1px solid var(--d-border); }
+.rt-sc-modal-head .mh-icon { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 11px; background: var(--d-blue-soft); color: var(--d-blue); display: flex; align-items: center; justify-content: center; }
+.rt-sc-modal-head .mh-title { font: 700 16px/1.2 var(--font-display); color: var(--d-text); }
+.rt-sc-modal-head .mh-key { font: 500 11px/1 var(--font-mono); color: var(--d-text-muted); margin-top: 4px; }
+.rt-sc-modal-x { margin-left: auto; flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; border: 0; background: transparent; color: var(--d-text-3); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.rt-sc-modal-x:hover { background: rgba(255,255,255,.07); color: var(--d-text); }
+.rt-sc-modal-body { overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+.rt-sc-field { display: flex; flex-direction: column; gap: 5px; }
+.rt-sc-field-lbl { font: 600 10px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--d-text-muted); }
+.rt-sc-field-val { font: 400 13px/1.5 var(--font-sans); color: var(--d-text-2); }
+.rt-sc-field-val code { font-family: var(--font-mono); font-size: .9em; background: var(--d-surface-2); padding: 2px 6px; border-radius: 5px; color: var(--d-cyan); }
+.rt-sc-field-val pre { margin: 0; font: 400 12px/1.5 var(--font-mono); background: var(--d-surface-2); border: 1px solid var(--d-border); border-radius: 8px; padding: 10px 12px; color: var(--d-text-2); white-space: pre-wrap; word-break: break-word; }
+.rt-sc-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.rt-sc-tag { font: 500 11px/1 var(--font-mono); padding: 4px 9px; border-radius: 9999px; background: var(--d-surface-3); border: 1px solid var(--d-border-2); color: var(--d-text-3); }
+.rt-sc-tag.owasp { background: var(--d-blue-softer); border-color: rgba(47,134,255,.2); color: var(--d-blue); }
+
+/* ── Attack footer ──────────────────────────────────────────── */
+.rt-at-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 20px 26px; background: var(--d-surface); border: 1px solid var(--d-border); border-radius: 16px; flex-wrap: wrap; }
+.rt-at-auth { display: flex; align-items: center; gap: 10px; font: 500 13px/1.3 var(--font-sans); color: var(--d-text-2); cursor: pointer; }
+.rt-at-authbox { width: 20px; height: 20px; flex-shrink: 0; border-radius: 6px; border: 1.5px solid var(--d-border-2); background: var(--d-surface-3); display: flex; align-items: center; justify-content: center; color: #fff; transition: all .1s; }
+.rt-at-authbox.on { background: var(--d-blue); border-color: var(--d-blue); }
+.rt-at-launch-info { font: 400 12px/1.4 var(--font-sans); color: var(--d-text-3); }
+.rt-at-launch-info b { color: var(--d-text); font-weight: 600; }
+
+/* ── Exec overlay ───────────────────────────────────────────── */
+.rt-exec-overlay { display: none; position: fixed; inset: 0; background: var(--d-overlay); z-index: 200; align-items: center; justify-content: center; }
+.rt-exec-overlay.show { display: flex; }
+.rt-exec-box { background: var(--d-surface); border: 1px solid var(--d-border); border-radius: 20px; padding: 36px 40px; width: 460px; text-align: center; box-shadow: var(--d-shadow-card); }
+.rt-exec-shield { width: 60px; height: 60px; border-radius: 16px; background: var(--d-danger-soft); border: 1px solid rgba(255,107,94,.25); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+.rt-exec-title { font: 700 20px/1.15 var(--font-display); color: #fff; margin-bottom: 6px; }
+.rt-exec-sub { font: 400 13px/1.5 var(--font-sans); color: var(--d-text-3); margin-bottom: 28px; }
+.rt-exec-steps { text-align: left; margin-bottom: 28px; border: 1px solid var(--d-border); border-radius: 12px; overflow: hidden; }
+.rt-exec-step { display: flex; align-items: center; gap: 13px; padding: 13px 18px; border-bottom: 1px solid var(--d-border); font: 500 13px/1 var(--font-sans); color: var(--d-text-muted); transition: color .3s, background .3s; }
+.rt-exec-step:last-child { border-bottom: 0; }
+.rt-exec-step.done { color: var(--d-success); background: var(--d-success-soft); }
+.rt-exec-step.active { color: var(--d-text); background: var(--d-blue-softer); }
+.rt-exec-step .sd { width: 8px; height: 8px; border-radius: 50%; background: var(--d-text-muted); flex-shrink: 0; transition: background .3s; }
+.rt-exec-step.done .sd { background: var(--d-success); }
+.rt-exec-step.active .sd { background: var(--d-danger); box-shadow: 0 0 0 3px var(--d-danger-soft); animation: rt-pulse 1.4s ease infinite; }
+.rt-exec-prog { background: var(--d-surface-2); border-radius: 4px; height: 5px; overflow: hidden; margin-bottom: 8px; }
+.rt-exec-bar { height: 100%; background: linear-gradient(90deg, var(--d-blue-strong), var(--d-cyan)); border-radius: 4px; transition: width .6s ease; }
+.rt-exec-lbl { font: 400 12px/1 var(--font-mono); color: var(--d-text-3); }
+
+/* ── Results ────────────────────────────────────────────────── */
+.rt-jobs-list { display: flex; flex-direction: column; gap: 14px; }
+.rt-jc { background: var(--d-surface); border: 1px solid var(--d-border); border-radius: 16px; overflow: hidden; transition: border-color .15s; }
+.rt-jc:hover { border-color: var(--d-border-2); }
+.rt-jc.attacked  { border-left: 3px solid var(--d-danger); }
+.rt-jc.findings  { border-left: 3px solid var(--d-warning); }
+.rt-jc.defended  { border-left: 3px solid var(--d-success); }
+.rt-jc-head { display: flex; align-items: center; gap: 13px; padding: 18px 20px 14px; cursor: pointer; }
+.rt-jc-icon { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; background: var(--d-blue-soft); color: var(--d-blue); }
+.rt-jc-id-wrap { flex: 1; min-width: 0; }
+.rt-jc-id { font: 700 15.5px/1.2 var(--font-display); color: var(--d-text); }
+.rt-jc-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-top: 4px; font: 400 11.5px/1 var(--font-mono); color: var(--d-text-3); }
+.rt-jc-strats { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 0 20px 14px; border-bottom: 1px solid var(--d-border); }
+.rt-jc-strats .lbl { font: 600 10px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--d-text-muted); margin-right: 2px; }
+.rt-jc-chip { padding: 4px 10px; border-radius: 9999px; background: var(--d-surface-3); border: 1px solid var(--d-border-2); color: var(--d-text-2); font: 600 11px/1 var(--font-sans); }
+.rt-jc-score { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+.rt-jc-score .rs-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.rt-jc-score .rs-sub { font: 500 11px/1 var(--font-mono); color: var(--d-text-3); white-space: nowrap; }
+.rt-chevron { width: 16px; height: 16px; stroke: var(--d-text-3); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; flex-shrink: 0; }
+.rt-chevron.open { transform: rotate(180deg); }
+.rt-jc-body { border-top: 1px solid var(--d-border); padding: 10px 12px 12px; display: none; }
+.rt-jc-body.open { display: block; }
+
+/* ── Group-style session cards (standalone-inspired) ─────────── */
+.rt-grp { border-radius: 11px; overflow: hidden; margin-bottom: 4px; }
+.rt-grp:last-child { margin-bottom: 0; }
+.rt-grp.open { background: var(--d-surface-2); }
+.rt-grp-hd { display: flex; align-items: center; gap: 11px; width: 100%; padding: 12px 14px; background: none; border: 0; text-align: left; cursor: pointer; transition: background .12s; border-radius: 11px; }
+.rt-grp-hd:hover { background: rgba(255,255,255,.04); }
+.rt-grp-hd-wrap { display: flex; align-items: center; border-radius: 11px; transition: background .12s; }
+.rt-grp-hd-wrap:hover { background: rgba(255,255,255,.04); }
+.rt-grp-hd-wrap .rt-grp-hd { border-radius: 0; flex: 1; min-width: 0; }
+.rt-grp-hd-wrap .rt-grp-hd:hover { background: none; }
+.rt-grp-hd-wrap .rt-gr-cover { margin-right: 14px; flex-shrink: 0; }
+.rt-grp.open .rt-grp-hd-wrap { border-radius: 11px 11px 0 0; }
+.rt-grp.open .rt-grp-hd { border-radius: 11px 11px 0 0; }
+.rt-chev { color: var(--d-text-3); transition: transform .18s; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rt-grp.open .rt-chev { transform: rotate(180deg); }
+.rt-grp-ic { width: 32px; height: 32px; flex: 0 0 auto; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,.05); color: var(--d-text-2); transition: background .15s, color .15s; }
+.rt-grp.open .rt-grp-ic { background: var(--d-blue-soft); color: var(--d-blue); }
+.rt-grp.open .rt-grp-ic.attacked  { background: rgba(255,107,94,.14);  color: var(--d-danger); }
+.rt-grp.open .rt-grp-ic.findings  { background: rgba(251,177,60,.14);  color: var(--d-warning); }
+.rt-grp.open .rt-grp-ic.defended  { background: rgba(46,213,166,.14);  color: var(--d-success); }
+.rt-grp-info { flex: 1; min-width: 0; }
+.rt-grp-title { font: 600 13.5px/1.2 var(--font-display); color: var(--d-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rt-grp-key { font: 400 11px/1 var(--font-mono); color: var(--d-cyan); margin-top: 3px; }
+.rt-grp-bd { padding: 2px 14px 14px; }
+.rt-otag { display: inline-flex; align-items: center; gap: 5px; font: 700 10.5px/1 var(--font-mono); padding: 5px 10px; border-radius: 9999px; white-space: nowrap; flex-shrink: 0; }
+.rt-otag .d { width: 6px; height: 6px; border-radius: 50%; }
+
+/* ── Evaluation detail panel ─────────────────────────────────── */
+.rt-eval2 { background: rgba(0,0,0,.2); border: 1px solid var(--d-border); border-radius: 10px; padding: 13px 15px; margin-bottom: 10px; }
+.rt-eval2-stats { display: flex; align-items: center; gap: 6px 18px; flex-wrap: wrap; margin-bottom: 4px; }
+.rt-eval2-stat { font: 400 12px/1 var(--font-sans); color: var(--d-text-3); }
+.rt-eval2-stat strong { color: var(--d-text-2); font-weight: 600; }
+.rt-eval2-text { font: 400 12.5px/1.65 var(--font-sans); color: var(--d-text-3); margin-top: 9px; }
+.rt-eval2-text strong { color: var(--d-text-2); font-weight: 600; }
+.rt-eval2-owasp { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.rt-eval2-rec { margin-top: 9px; padding: 9px 12px; border: 1px solid rgba(251,177,60,.2); background: rgba(251,177,60,.07); border-radius: 8px; font: 400 12px/1.5 var(--font-sans); color: var(--d-text-2); }
+.rt-eval2-rec strong { color: var(--d-warning); font-weight: 600; }
+.rt-eval2-note { margin-top: 9px; font: 400 11px/1.4 var(--font-mono); color: var(--d-text-muted); border-top: 1px solid rgba(255,255,255,.06); padding-top: 8px; }
+.rt-eval2-section-hd { font: 600 10px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--d-text-muted); margin: 14px 0 8px; display: flex; align-items: center; gap: 6px; }
+.rt-eval2-chain { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.rt-eval2-chain li { display: flex; align-items: flex-start; gap: 9px; font: 400 12px/1.55 var(--font-sans); color: var(--d-text-3); }
+.rt-eval2-chain li .n { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--d-surface-2); color: var(--d-text-2); font: 600 10px/20px var(--font-mono); text-align: center; }
+.rt-eval2-evidence { display: flex; flex-direction: column; gap: 5px; }
+.rt-eval2-ev-item { font: 400 11.5px/1.55 var(--font-mono); color: var(--d-text-2); background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.07); border-radius: 6px; padding: 8px 11px; word-break: break-word; }
+
+/* ── Guardrail "Cover" button on group header ────────────────── */
+.rt-gr-cover { display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 9px; cursor: pointer; border: 1px solid rgba(47,134,255,.32); background: rgba(47,134,255,.10); color: var(--d-blue); font: 600 12px/1 var(--font-sans); transition: background .15s, border-color .15s; flex-shrink: 0; }
+.rt-gr-cover:hover { background: rgba(47,134,255,.2); border-color: rgba(47,134,255,.55); }
+.rt-gr-cover .ext { opacity: .75; }
+
+/* ── Guardrail banner (bottom of job card) ───────────────────── */
+.rt-gr-banner { margin: 10px 0 4px; display: flex; gap: 14px; padding: 16px 18px; border-radius: 13px; border: 1px solid rgba(47,134,255,.28); background: linear-gradient(135deg, rgba(47,134,255,.13), rgba(47,134,255,.04)); }
+.rt-gr-banner .gi { width: 38px; height: 38px; flex: 0 0 auto; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--d-blue-strong); color: #fff; box-shadow: 0 6px 16px rgba(0,102,255,.4); }
+.rt-gr-banner .gtxt { min-width: 0; flex: 1; }
+.rt-gr-banner .gt { font: 700 14.5px/1.3 var(--font-display); color: #fff; letter-spacing: -.01em; }
+.rt-gr-banner .gs { font: 400 12.5px/1.5 var(--font-sans); color: var(--d-text-2); margin: 5px 0 12px; }
+.rt-gr-banner .gs code { font-family: var(--font-mono); font-size: .9em; color: var(--d-cyan); background: rgba(41,166,255,.1); padding: 1px 5px; border-radius: 4px; }
+.rt-gr-banner .gacts { display: flex; gap: 9px; flex-wrap: wrap; }
+
+/* ── General form modal ──────────────────────────────────────── */
+.gm-form-box { background: var(--d-surface); border: 1px solid var(--d-border-2); border-radius: 18px; width: 100%; max-width: 520px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.6); animation: gmPop .2s cubic-bezier(.2,.8,.3,1); }
+.gm-form-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid var(--d-border); }
+.gm-form-title { font: 700 16px/1 var(--font-display); color: var(--d-text); }
+.gm-form-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+.gm-form-label { font: 600 12px/1 var(--font-display); color: var(--d-text-3); margin-bottom: 6px; display: block; }
+.gm-form-input { width: 100%; background: rgba(255,255,255,.05); border: 1px solid var(--d-border-2); border-radius: 9px; color: var(--d-text); font: 400 13px/1.4 var(--font-sans); padding: 10px 12px; box-sizing: border-box; resize: vertical; }
+.gm-form-input:focus { outline: none; border-color: var(--d-blue); }
+.gm-form-foot { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid var(--d-border); }
+.gm-log { background: rgba(0,0,0,.3); border: 1px solid var(--d-border); border-radius: 8px; padding: 10px 12px; font: 400 12px/1.6 var(--font-mono); color: var(--d-text-3); margin-top: 4px; }
+/* ── Guardrail "How it works" modal ──────────────────────────── */
+.rt-gmodal-overlay { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 28px; background: rgba(2,12,24,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: gmFade .16s ease; }
+@keyframes gmFade { from { opacity: 0; } to { opacity: 1; } }
+.rt-gmodal { position: relative; width: 100%; max-width: 600px; max-height: calc(100vh - 56px); display: flex; flex-direction: column; overflow: hidden; background: var(--d-surface-2); border: 1px solid var(--d-border-2); border-radius: 18px; box-shadow: 0 32px 80px rgba(0,0,0,.6); animation: gmPop .2s cubic-bezier(.2,.8,.3,1); }
+@keyframes gmPop { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+.rt-gmodal-x { position: absolute; top: 16px; right: 16px; z-index: 2; width: 32px; height: 32px; border-radius: 9px; border: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,.06); color: var(--d-text-3); transition: background .15s, color .15s; }
+.rt-gmodal-x:hover { background: rgba(255,255,255,.12); color: var(--d-text); }
+.rt-gmodal-head { display: flex; align-items: center; gap: 14px; padding: 26px 28px 18px; background: linear-gradient(135deg, rgba(47,134,255,.16), rgba(47,134,255,.02)); border-bottom: 1px solid var(--d-border); }
+.rt-gmodal-head .gm-mark { width: 46px; height: 46px; flex: 0 0 auto; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--d-blue-strong); box-shadow: 0 8px 22px rgba(0,102,255,.4); }
+.gm-kick { font: 600 9.5px/1.4 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--d-blue); }
+.gm-title { font: 800 26px/1.05 var(--font-display); color: #fff; letter-spacing: -.02em; margin: 4px 0 0; }
+.rt-gmodal-body { padding: 22px 28px 8px; overflow-y: auto; }
+.gm-lede { font: 400 14px/1.65 var(--font-sans); color: var(--d-text-2); margin: 0 0 20px; }
+.gm-lede code { font-family: var(--font-mono); font-size: .86em; color: var(--d-cyan); }
+.gm-lede b { color: #fff; font-weight: 700; }
+.gm-why { border-radius: 13px; border: 1px solid rgba(255,107,94,.28); background: rgba(255,107,94,.06); padding: 15px 16px; margin-bottom: 22px; }
+.gm-why-h { display: flex; align-items: flex-start; gap: 8px; font: 700 12.5px/1.45 var(--font-display); color: var(--d-danger); margin-bottom: 12px; }
+.gm-why-list { display: flex; flex-direction: column; gap: 7px; }
+.gm-why-row { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px; background: rgba(0,0,0,.22); flex-wrap: wrap; }
+.gm-tool { font: 600 11px/1 var(--font-mono); color: var(--d-text); background: rgba(255,255,255,.07); padding: 5px 8px; border-radius: 7px; white-space: nowrap; flex: 0 0 auto; }
+.gm-vuln { flex: 1; min-width: 120px; font: 400 12.5px/1.4 var(--font-sans); color: var(--d-text-2); }
+.gm-tag { flex: 0 0 auto; font: 700 9.5px/1 var(--font-mono); text-transform: uppercase; letter-spacing: .05em; padding: 4px 8px; border-radius: 9999px; }
+.gm-tag.high { color: var(--d-danger); background: rgba(255,107,94,.15); }
+.gm-tag.medium { color: var(--d-warning); background: rgba(251,177,60,.15); }
+.gm-why-foot { font: 500 11.5px/1.5 var(--font-sans); color: var(--d-text-3); margin-top: 11px; }
+.gm-caps-h { font: 700 12px/1 var(--font-display); color: #fff; margin-bottom: 12px; }
+.gm-caps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+.gm-cap { display: flex; gap: 12px; }
+.gm-cap-ic { width: 36px; height: 36px; flex: 0 0 auto; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--d-blue-soft); color: var(--d-blue); }
+.gm-cap-t { font: 600 13px/1.35 var(--font-sans); color: var(--d-text); }
+.gm-cap-t code { font-family: var(--font-mono); font-size: .82em; color: var(--d-cyan); margin-left: 2px; }
+.gm-cap-d { font: 400 12px/1.55 var(--font-sans); color: var(--d-text-3); margin-top: 2px; }
+.rt-gmodal-foot { display: flex; gap: 10px; padding: 18px 28px 24px; border-top: 1px solid var(--d-border); background: var(--d-surface-2); }
+.rt-gmodal-foot .rt-btn { flex: 1; height: 46px; }
+
+/* ── Evaluation Criteria panel ───────────────────────────────── */
+.rt-crit { background: rgba(0,0,0,.15); border: 1px solid var(--d-border); border-radius: 10px; padding: 13px 15px; }
+.rt-crit-hd { font: 600 10px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--d-text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+.rt-crit-sub { font: 600 10px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--d-text-muted); margin: 12px 0 6px; }
+.rt-crit-sub:first-of-type { margin-top: 0; }
+.rt-tag-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.rt-atag { padding: 3px 9px; border-radius: 5px; font: 500 11px/1.5 var(--font-mono); background: rgba(47,134,255,.12); color: var(--d-blue); border: 1px solid rgba(47,134,255,.22); }
+.rt-wtag { padding: 3px 9px; border-radius: 5px; font: 500 11px/1.5 var(--font-mono); background: rgba(255,107,94,.12); color: var(--d-danger); border: 1px solid rgba(255,107,94,.22); }
+.rt-guidance { font: 400 12px/1.7 var(--font-sans); color: var(--d-text-3); white-space: pre-line; margin-top: 6px; }
+
+/* ── KPI trend badge ────────────────────────────────────────── */
+.rt-kpi .kt { display: inline-flex; align-items: center; gap: 4px; font: 700 11px/1 var(--font-mono); margin-top: 12px; padding: 4px 8px; border-radius: 9999px; white-space: nowrap; }
+.rt-kpi .kt.up   { color: var(--d-success); background: var(--d-success-soft); }
+.rt-kpi .kt.down { color: var(--d-danger);  background: var(--d-danger-soft); }
+.rt-kpi .kt.flat { color: var(--d-text-3);  background: rgba(255,255,255,.06); }
+
+/* ── Bar chart (risk distribution) ─────────────────────────── */
+.rt-chart { display: flex; align-items: flex-end; gap: 18px; height: 180px; padding: 10px 6px 0; position: relative; }
+.rt-chart .grid-line { position: absolute; left: 0; right: 0; height: 1px; background: var(--d-border); }
+.rt-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; height: 100%; justify-content: flex-end; position: relative; z-index: 1; }
+.rt-bar { width: 100%; max-width: 64px; border-radius: 8px 8px 0 0; position: relative; transition: height 1s cubic-bezier(.16,.84,.4,1); min-height: 4px; }
+.rt-bar .bv { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); font: 700 14px/1 var(--font-display); color: #fff; }
+.rt-bar-x { font: 600 12px/1 var(--font-sans); color: var(--d-text-2); }
+.rt-bar-x .pct { display: block; font: 400 10px/1 var(--font-mono); color: var(--d-text-3); margin-top: 4px; text-align: center; }
+.rt-legend { display: flex; gap: 18px; margin-top: 18px; flex-wrap: wrap; }
+.rt-legend .lg { display: inline-flex; align-items: center; gap: 7px; font: 500 12px/1 var(--font-sans); color: var(--d-text-2); }
+.rt-legend .lg .sw { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+/* ── Progress bars (defense by category) ───────────────────── */
+.rt-prog-row { display: grid; grid-template-columns: 200px 1fr 52px; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--d-border); }
+.rt-prog-row:last-child { border-bottom: 0; }
+.rt-prog-name { display: flex; align-items: center; gap: 9px; font: 600 13px/1.2 var(--font-sans); color: var(--d-text); }
+.rt-prog-name .pi { width: 24px; height: 24px; border-radius: 7px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
+.rt-prog-track { height: 9px; border-radius: 9999px; background: rgba(255,255,255,.07); overflow: hidden; }
+.rt-prog-fill { height: 100%; border-radius: 9999px; transition: width 1s cubic-bezier(.16,.84,.4,1); }
+.rt-prog-val { font: 700 13px/1 var(--font-mono); text-align: right; }
+
+/* ── Reports ────────────────────────────────────────────────── */
+.rt-report-grid { display: grid; grid-template-columns: 360px 1fr; gap: 22px; align-items: start; }
+.rt-format-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 4px; }
+.rt-format { text-align: center; padding: 16px 10px; border-radius: 12px; border: 1px solid var(--d-border-2); background: var(--d-surface-3); color: var(--d-text-2); cursor: pointer; transition: all .14s; }
+.rt-format:hover { color: var(--d-text); background: var(--d-surface-2); }
+.rt-format.on { border-color: var(--d-blue); background: var(--d-blue-softer); color: #fff; box-shadow: var(--d-ring-focus); }
+.rt-format .fi { width: 28px; height: 28px; margin: 0 auto 8px; color: var(--d-cyan); display: flex; align-items: center; justify-content: center; }
+.rt-format.on .fi { color: var(--d-blue); }
+.rt-format .fn { font: 700 13px/1 var(--font-display); }
+.rt-format .fx { font: 400 10px/1.2 var(--font-mono); color: var(--d-text-3); margin-top: 4px; }
+.rt-check-list { display: flex; flex-direction: column; gap: 2px; }
+.rt-check { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; transition: background .14s; cursor: pointer; }
+.rt-check:hover { background: rgba(255,255,255,.04); }
+.rt-check .cb { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--d-border-2); flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; color: #fff; transition: all .12s; }
+.rt-check .cb.on { background: var(--d-blue-strong); border-color: var(--d-blue-strong); }
+.rt-check .cn { font: 500 13px/1.2 var(--font-sans); color: var(--d-text); }
+.rt-check .cd { font: 400 11px/1.3 var(--font-sans); color: var(--d-text-3); margin-top: 2px; }
+.rt-summary-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.rt-ss { background: var(--d-surface-2); border: 1px solid var(--d-border); border-radius: 11px; padding: 14px; }
+.rt-ss .v { font: 800 22px/1 var(--font-display); color: #fff; }
+.rt-ss .l { font: 500 11px/1.3 var(--font-sans); color: var(--d-text-3); margin-top: 5px; }
+/* live document preview */
+.rt-preview { background: var(--d-bg-2); border: 1px solid var(--d-border); border-radius: 16px; padding: 20px; position: sticky; top: 28px; }
+.rt-doc { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: var(--d-shadow-card); color: #1A446C; }
+.rt-doc-cover { background: linear-gradient(150deg,#002F5C,#001025); color: #fff; padding: 24px 24px 20px; }
+.rt-doc-cover .badge { display: inline-flex; align-items: center; gap: 6px; font: 600 9px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: #66A3FF; margin-bottom: 12px; }
+.rt-doc-cover h3 { font: 700 17px/1.2 var(--font-display); margin: 0 0 6px; color: #fff; }
+.rt-doc-cover .meta { font: 400 10px/1.5 var(--font-mono); color: rgba(255,255,255,.6); }
+.rt-doc-body { padding: 16px 20px 20px; }
+.rt-doc-body .sec { margin-bottom: 12px; }
+.rt-doc-body .sh { font: 700 10px/1 var(--font-display); color: #002F5C; letter-spacing: .04em; text-transform: uppercase; padding-bottom: 6px; border-bottom: 2px solid #E6EAEF; margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+.rt-doc-body .sh .n { width: 15px; height: 15px; border-radius: 50%; background: #0066FF; color: #fff; font: 700 8px/1 var(--font-mono); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.rt-doc-line { height: 6px; border-radius: 3px; background: #E6EAEF; margin-bottom: 5px; }
+.rt-doc-mini-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin: 4px 0 6px; }
+.rt-doc-mini { background: #F4F7FA; border-radius: 6px; padding: 7px; text-align: center; }
+.rt-doc-mini .v { font: 800 14px/1 var(--font-display); color: #002F5C; }
+.rt-doc-mini .l { font: 500 7px/1.2 var(--font-sans); color: #768CA2; margin-top: 3px; text-transform: uppercase; letter-spacing: .06em; }
+.rt-doc-bars { display: flex; align-items: flex-end; gap: 5px; height: 46px; padding-top: 4px; }
+.rt-doc-bars .b { flex: 1; border-radius: 2px 2px 0 0; }
+.rt-fmt-group { display: flex; gap: 10px; }
+.rt-fmt-btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 10px; border: 1px solid var(--d-border-2); background: var(--d-surface-3); color: var(--d-text-2); font: 600 13px/1 var(--font-sans); cursor: pointer; transition: all .14s; }
+.rt-fmt-btn:hover { border-color: var(--d-border-2); background: var(--d-surface-2); color: var(--d-text); }
+.rt-fmt-btn.on { border-color: var(--d-danger); color: var(--d-danger); background: var(--d-danger-soft); }
+
+/* ── Empty state ────────────────────────────────────────────── */
+.rt-empty { padding: 60px 20px; text-align: center; color: var(--d-text-3); }
+.rt-empty svg { opacity: .3; margin-bottom: 14px; }
+.rt-empty p { font: 400 14px/1.5 var(--font-sans); margin-bottom: 20px; }
+
+/* ── Toast ──────────────────────────────────────────────────── */
+#rt-toast { position: fixed; bottom: 22px; right: 22px; background: rgba(7,34,60,.95); border: 1px solid var(--d-border-2); border-radius: 12px; padding: 12px 18px; font: 500 13px/1.4 var(--font-sans); opacity: 0; pointer-events: none; z-index: 300; max-width: 340px; transition: opacity .25s, transform .25s; transform: translateY(8px); backdrop-filter: blur(12px); }
+#rt-toast.show { opacity: 1; transform: translateY(0); }
+#rt-toast.ok { border-color: rgba(46,213,166,.3); color: var(--d-success); }
+#rt-toast.err { border-color: rgba(255,107,94,.3); color: var(--d-danger); }
+
+/* ── Spinner ─────────────────────────────────────────────────── */
+.spin { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- ── Login ─────────────────────────────────────────────────────── -->
+<div id="login-page">
+  <div class="lc">
+    <div class="lc-brand">
+      <div class="lc-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L21 6.5V15C21 20 17 23.5 12 25.5C7 23.5 3 20 3 15V6.5L12 2Z" fill="none" stroke="#fff" stroke-width="1.8"/>
+          <circle cx="12" cy="13" r="3.5" stroke="#fff" stroke-width="1.6"/>
+          <line x1="12" y1="13" x2="16.5" y2="9" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="lc-name-sub">iDox.ai</div>
+        <div class="lc-name-main">Red<b>Guard</b></div>
+      </div>
+    </div>
+    <h2>Agent Red Team Platform</h2>
+    <p>Enter your API key to access the platform and start testing your AI agents.</p>
+    <div class="rt-field">
+      <label>API Key <span class="req">*</span></label>
+      <input class="rt-input" id="login-key" type="password" placeholder="redteam-bypass-poc" autocomplete="off"/>
+    </div>
+    <button class="rt-btn rt-btn-primary rt-btn-full" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="rt-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ── App ───────────────────────────────────────────────────────── -->
+<div id="app">
+  <!-- Sidebar -->
+  <aside class="rt-side">
+    <div class="rt-brand">
+      <div class="mark" style="background:none;padding:0;">
+        <img src="/ui/idox_icon.svg" width="34" height="34" alt="iDox" style="display:block;border-radius:9px;box-shadow:var(--d-glow-blue);" />
+        <span class="rt-pip"></span>
+      </div>
+      <div>
+        <div class="bs">iDox.ai</div>
+        <div class="bt">Red <b>Team</b>™</div>
+      </div>
+    </div>
+
+    <div class="rt-nav-label">Workspace</div>
+    <nav class="rt-nav">
+      <button class="rt-nav-item on" data-page="overview" onclick="goPage('overview')">
+        <svg class="ni" viewBox="0 0 18 18"><rect x="1" y="1" width="7" height="7" rx="1.5"/><rect x="10" y="1" width="7" height="7" rx="1.5"/><rect x="1" y="10" width="7" height="7" rx="1.5"/><rect x="10" y="10" width="7" height="7" rx="1.5"/></svg>
+        Overview
+      </button>
+      <button class="rt-nav-item" data-page="attack" onclick="goPage('attack')">
+        <svg class="ni" viewBox="0 0 18 18"><circle cx="9" cy="9" r="7"/><circle cx="9" cy="9" r="4"/><circle cx="9" cy="9" r="1.5" fill="currentColor"/></svg>
+        Scan testing
+      </button>
+      <button class="rt-nav-item" data-page="results" onclick="goPage('results')">
+        <svg class="ni" viewBox="0 0 18 18"><path d="M7 2h4M7.5 2v4.5l-3.75 6.75a1.5 1.5 0 001.5 2.25h7.5a1.5 1.5 0 001.5-2.25l-3.75-6.75V2"/><path d="M5 11h8"/></svg>
+        Results
+        <span class="nb" id="results-badge" style="display:none">0</span>
+      </button>
+      <button class="rt-nav-item" data-page="reports" onclick="goPage('reports')" style="display:none">
+        <svg class="ni" viewBox="0 0 18 18"><path d="M11 1H4.5A1.5 1.5 0 003 2.5v13A1.5 1.5 0 004.5 17h9a1.5 1.5 0 001.5-1.5V7z"/><path d="M11 1v6h4.5M6.5 10h5M6.5 13h3"/></svg>
+        Reports
+      </button>
+    </nav>
+
+    <div class="rt-side-foot">
+      <div class="rt-status-card">
+        <div class="sr"><span class="live"></span>Engine online</div>
+        <div class="sd" id="engine-status">Loading scenarios…</div>
+      </div>
+      <div class="rt-user">
+        <span class="av" id="user-av">—</span>
+        <div>
+          <div class="un" id="user-name">—</div>
+          <div class="ue">Security Lead</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="rt-main">
+    <div class="rt-topbar">
+      <div>
+        <div class="tt" id="topbar-title">Overview</div>
+        <div class="ts" id="topbar-sub">Security posture across all red-team runs</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="rt-btn rt-btn-danger rt-btn-sm" id="topbar-new" onclick="goPage('attack')" style="display:none">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+        NEW ATTACK
+      </button>
+    </div>
+
+    <div class="rt-content">
+      <div class="rt-content-inner">
+
+        <!-- ── Overview ─────────────────────────────────────────── -->
+        <div class="rt-page active" id="page-overview">
+          <div class="rt-kpi-grid" id="kpi-grid">
+            <div class="rt-kpi" style="--g:rgba(47,134,255,.18)">
+              <div class="kic" style="background:var(--d-blue-soft)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--d-blue)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>
+              </div>
+              <div class="kv" id="kpi-total">—</div>
+              <div class="kl">Total scenarios run</div>
+              <span class="kt flat" id="kpi-total-trend" style="display:none"></span>
+            </div>
+            <div class="rt-kpi" style="--g:rgba(46,213,166,.18)">
+              <div class="kic" style="background:var(--d-success-soft)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--d-success)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 5v6c0 5-3.5 8.5-9 9-5.5-.5-9-4-9-9V7l9-5z"/><path d="M9 12l2 2 4-4"/></svg>
+              </div>
+              <div class="kv" id="kpi-defense">—</div>
+              <div class="kl">Overall defense rate</div>
+              <span class="kt up" id="kpi-defense-trend" style="display:none">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1,7 5,3 9,7"/></svg>
+              </span>
+            </div>
+            <div class="rt-kpi" style="--g:rgba(255,107,94,.18)">
+              <div class="kic" style="background:var(--d-danger-soft)">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="var(--d-danger)" stroke-width="1.8" stroke-linecap="round"><polygon points="10,2 18,17 2,17"/><line x1="10" y1="8" x2="10" y2="12"/><circle cx="10" cy="15" r=".8" fill="var(--d-danger)"/></svg>
+              </div>
+              <div class="kv" id="kpi-vuln" style="color:var(--d-danger)">—</div>
+              <div class="kl">Vulnerabilities found</div>
+              <span class="kt down" id="kpi-vuln-trend" style="display:none">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1,3 5,7 9,3"/></svg>
+              </span>
+            </div>
+            <div class="rt-kpi" style="--g:rgba(47,134,255,.18)">
+              <div class="kic" style="background:var(--d-blue-soft)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--d-blue)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 5-9 5-9-5 9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg>
+              </div>
+              <div class="kv" id="kpi-jobs">—</div>
+              <div class="kl">Test jobs run</div>
+              <span class="kt flat" id="kpi-jobs-trend" style="display:none">All suites</span>
+            </div>
+          </div>
+
+          <div class="rt-grid-2">
+            <div class="rt-card">
+              <div class="rt-card-h">
+                <div><div class="ct">Risk distribution</div><div class="cs">Findings by severity</div></div>
+                <div class="spacer"></div>
+                <span class="rt-tag" id="risk-total-tag" style="display:none"></span>
+              </div>
+              <div class="rt-chart" id="risk-chart">
+                <div style="width:100%;text-align:center;padding:40px 0;color:var(--d-text-3);font-size:13px;align-self:center">Run a test to see risk data</div>
+              </div>
+              <div class="rt-legend" id="risk-legend" style="display:none">
+                <span class="lg"><span class="sw" style="background:var(--d-danger)"></span> High — immediate action</span>
+                <span class="lg"><span class="sw" style="background:var(--d-warning)"></span> Medium — review</span>
+                <span class="lg"><span class="sw" style="background:var(--d-success)"></span> Low — monitored</span>
+              </div>
+            </div>
+            <div class="rt-card">
+              <div class="rt-card-h">
+                <div><div class="ct">Recent activity</div><div class="cs">Latest red-team runs</div></div>
+                <div class="spacer"></div>
+                <button class="rt-btn rt-btn-ghost rt-btn-sm" onclick="goPage('results')">View all →</button>
+              </div>
+              <div class="rt-feed" id="activity-feed">
+                <div style="padding:24px 0;text-align:center;color:var(--d-text-3);font-size:13px">Loading…</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Defense rate by category -->
+          <div class="rt-card" style="margin-bottom:22px">
+            <div class="rt-card-h">
+              <div><div class="ct">Defense rate by attack category</div><div class="cs">Share of attempts successfully blocked, per OWASP category</div></div>
+            </div>
+            <div id="defense-bars">
+              <div style="padding:20px 0;text-align:center;color:var(--d-text-3);font-size:13px">No data yet — run a test to see category defense rates</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Scan testing ──────────────────────────────────── -->
+        <div class="rt-page" id="page-attack">
+          <!-- Section 1: Target -->
+          <div class="rt-card rt-at-card" style="margin-bottom:16px">
+            <div class="rt-at-head">
+              <div class="rt-at-num">1</div>
+              <div>
+                <div class="rt-at-title">Test target <span style="color:var(--d-text-3);font-weight:500;font-size:14px">(single agent)</span></div>
+                <div class="rt-at-sub">Configure one AI agent endpoint at a time — iDox.ai Red Team runs every scenario against this target.</div>
+              </div>
+            </div>
+            <div class="rt-at-grid1">
+              <div class="rt-field">
+                <label>Agent URL <span class="req">*</span></label>
+                <input class="rt-input" id="agent-url" type="url" placeholder="http://attack-agent:9000"/>
+                <div class="rt-field-hint">Target AI agent endpoint. Defaults to the built-in attack agent.</div>
+              </div>
+              <div class="rt-field">
+                <label>Session ID <span style="color:var(--d-text-muted);font-weight:400">(optional)</span></label>
+                <input class="rt-input" id="openclaw-session-id" type="text" placeholder="Leave blank to use scenario key per run"/>
+                <div class="rt-field-hint">OpenClaw session name. Blank = each scenario runs in its own isolated session.</div>
+              </div>
+            </div>
+            <div class="rt-at-note">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7.5" cy="7.5" r="6"/><line x1="7.5" y1="5" x2="7.5" y2="5.1"/><line x1="7.5" y1="7" x2="7.5" y2="11"/></svg>
+              <span>Same agent URL + scenarios run type are treated as the same target. History accumulates across sessions.</span>
+            </div>
+          </div>
+
+          <!-- Section 2: Scenarios -->
+          <div class="rt-card rt-at-card" style="margin-bottom:16px">
+            <div class="rt-at-head">
+              <div class="rt-at-num danger">2</div>
+              <div>
+                <div class="rt-at-title">Scan scenarios</div>
+                <div class="rt-at-sub">Select which scenarios to execute against the target agent. Scenarios run sequentially, one at a time.</div>
+              </div>
+              <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+                <button class="rt-btn rt-btn-ghost rt-btn-sm" onclick="showGenerateModal()">✦ Generate with LLM</button>
+                <button class="rt-btn rt-btn-primary rt-btn-sm" onclick="showCreateScenario()">+ New Scenario</button>
+                <span style="font:700 13px/1 var(--font-mono);color:var(--d-text-3);margin-left:4px" id="sel-count-badge">0 selected</span>
+              </div>
+            </div>
+            <div class="rt-at-bulk">
+              <button class="rt-bulk" onclick="selectAll()">
+                <div class="bx" style="background:var(--d-blue);border-color:var(--d-blue)">
+                  <svg width="9" height="7" viewBox="0 0 10 8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 4,7 9,1"/></svg>
+                </div>
+                Select all
+              </button>
+              <button class="rt-bulk" onclick="clearSel()">
+                <div class="bx"></div>
+                Clear
+              </button>
+            </div>
+            <div class="rt-strat-list" id="scenario-list">
+              <div style="padding:20px;text-align:center;color:var(--d-text-3);font-size:13px">Loading scenarios…</div>
+            </div>
+          </div>
+
+          <!-- Launch bar -->
+          <div class="rt-at-foot">
+            <label class="rt-at-auth" onclick="toggleAuth()">
+              <div class="rt-at-authbox" id="auth-box"></div>
+              I confirm I am authorized to test the target agent
+            </label>
+            <div style="flex:1"></div>
+            <div style="text-align:right">
+              <div class="rt-at-launch-info" id="launch-info"><b>0</b> scenarios selected</div>
+              <button class="rt-btn rt-btn-danger" id="launch-btn" onclick="launchJob()" disabled style="margin-top:10px">
+                LAUNCH AGENT RED-TEAM TEST
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Results ─────────────────────────────────────────── -->
+        <div class="rt-page" id="page-results">
+          <div id="results-list">
+            <div style="padding:40px;text-align:center;color:var(--d-text-3)">Loading…</div>
+          </div>
+        </div>
+
+        <!-- ── Reports ─────────────────────────────────────────── -->
+        <div class="rt-page" id="page-reports">
+          <div class="rt-report-grid">
+            <!-- Config column -->
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <!-- Format selection -->
+              <div class="rt-card">
+                <div class="rt-section-title">Export format</div>
+                <div class="rt-format-row">
+                  <button class="rt-format" id="fmt-pdf" onclick="setFmt('pdf')">
+                    <div class="fi">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h1.5a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H9v-3z"/><path d="M14 13h1a1.5 1.5 0 0 1 0 3h-1v-3z"/></svg>
+                    </div>
+                    <div class="fn">PDF</div>
+                    <div class="fx">Board-ready</div>
+                  </button>
+                  <button class="rt-format on" id="fmt-html" onclick="setFmt('html')">
+                    <div class="fi">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 13l-2 2 2 2"/><path d="M14 13l2 2-2 2"/></svg>
+                    </div>
+                    <div class="fn">HTML</div>
+                    <div class="fx">Interactive</div>
+                  </button>
+                  <button class="rt-format" id="fmt-json" onclick="setFmt('json')">
+                    <div class="fi">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13c-.5 0-1 .5-1 1v1c0 .5.5 1 1 1"/><path d="M12 13v4"/><path d="M16 13c.5 0 1 .5 1 1v1c0 .5-.5 1-1 1"/></svg>
+                    </div>
+                    <div class="fn">JSON</div>
+                    <div class="fx">Machine-readable</div>
+                  </button>
+                </div>
+              </div>
+              <!-- Report sections -->
+              <div class="rt-card">
+                <div class="rt-card-h">
+                  <div><div class="ct">Report sections</div><div class="cs" id="sec-count-sub">6 of 6 included</div></div>
+                </div>
+                <div class="rt-check-list" id="report-sections">
+                  <div class="rt-check on" data-sec="summary" onclick="toggleSec(this)">
+                    <span class="cb on"><svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 4,7 9,1"/></svg></span>
+                    <div><div class="cn">Executive summary</div><div class="cd">High-level posture &amp; key findings</div></div>
+                  </div>
+                  <div class="rt-check on" data-sec="method" onclick="toggleSec(this)">
+                    <span class="cb on"><svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 4,7 9,1"/></svg></span>
+                    <div><div class="cn">Methodology</div><div class="cd">Suites, models &amp; parameters tested</div></div>
+                  </div>
+                  <div class="rt-check on" data-sec="category" onclick="toggleSec(this)">
+                    <span class="cb on"><svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 4,7 9,1"/></svg></span>
+                    <div><div class="cn">Findings by category</div><div class="cd">Defense rate per attack type</div></div>
+                  </div>
+                  <div class="rt-check on" data-sec="details" onclick="toggleSec(this)">
+                    <span class="cb on"><svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 4,7 9,1"/></svg></span>
+                    <div><div class="cn">Detailed results</div><div class="cd">Every prompt, response &amp; score</div></div>
+                  </div>
+                  <div class="rt-check on" data-sec="matrix" onclick="toggleSec(this)">
+                    <span class="cb on"><svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 4,7 9,1"/></svg></span>
+                    <div><div class="cn">Risk matrix</div><div class="cd">Severity × likelihood mapping</div></div>
+                  </div>
+                  <div class="rt-check on" data-sec="recs" onclick="toggleSec(this)">
+                    <span class="cb on"><svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 4,7 9,1"/></svg></span>
+                    <div><div class="cn">Recommendations</div><div class="cd">Prioritized remediation steps</div></div>
+                  </div>
+                </div>
+              </div>
+              <!-- Findings summary -->
+              <div class="rt-card">
+                <div class="rt-section-title">Findings summary</div>
+                <div class="rt-summary-stats" id="report-summary-stats">
+                  <div class="rt-ss"><div class="v" id="rss-total">—</div><div class="l">Total tests</div></div>
+                  <div class="rt-ss"><div class="v" id="rss-rate" style="color:var(--d-success)">—</div><div class="l">Defense rate</div></div>
+                  <div class="rt-ss"><div class="v" id="rss-fail" style="color:var(--d-danger)">—</div><div class="l">Defense failures</div></div>
+                  <div class="rt-ss"><div class="v" id="rss-jobs">—</div><div class="l">Test jobs</div></div>
+                </div>
+                <button class="rt-btn rt-btn-danger" style="width:100%;margin-top:16px" id="export-btn" onclick="exportReport()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 1v7"/><polyline points="4,5 7,8 10,5"/><path d="M2 10v1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1"/></svg>
+                  EXPORT REPORT
+                </button>
+              </div>
+            </div>
+            <!-- Preview column -->
+            <div class="rt-preview">
+              <div class="rt-section-title" style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="var(--d-text-muted)" stroke-width="1.6" stroke-linecap="round"><rect x="1" y="1" width="12" height="12" rx="2"/><line x1="3" y1="4.5" x2="11" y2="4.5"/><line x1="3" y1="7" x2="11" y2="7"/><line x1="3" y1="9.5" x2="8" y2="9.5"/></svg>
+                Live preview
+              </div>
+              <div class="rt-doc" id="report-preview-doc">
+                <div class="rt-doc-cover">
+                  <div class="badge">
+                    <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 1L13 4.5V9C13 12 10.5 13.5 7 14.5C3.5 13.5 1 12 1 9V4.5L7 1Z"/></svg>
+                    iDox.ai Red Team
+                  </div>
+                  <h3>AI Red-Team Assessment Report</h3>
+                  <div class="meta" id="preview-meta">Prepared by Security Engineering · <span id="preview-date"></span></div>
+                </div>
+                <div class="rt-doc-body" id="preview-body">
+                  <div class="sec" id="prev-summary">
+                    <div class="sh"><span class="n">1</span> Executive summary</div>
+                    <div class="rt-doc-line" style="width:100%"></div>
+                    <div class="rt-doc-line" style="width:92%"></div>
+                    <div class="rt-doc-line" style="width:78%"></div>
+                  </div>
+                  <div class="sec" id="prev-method">
+                    <div class="sh"><span class="n">2</span> Methodology</div>
+                    <div class="rt-doc-mini-grid">
+                      <div class="rt-doc-mini"><div class="v" id="prev-total">—</div><div class="l">Tests</div></div>
+                      <div class="rt-doc-mini"><div class="v" id="prev-rate">—</div><div class="l">Defended</div></div>
+                      <div class="rt-doc-mini"><div class="v" id="prev-fail">—</div><div class="l">Critical</div></div>
+                    </div>
+                  </div>
+                  <div class="sec" id="prev-category">
+                    <div class="sh"><span class="n">3</span> Findings by category</div>
+                    <div class="rt-doc-bars" id="prev-bars">
+                      <div class="b" style="height:60%;background:#0CB180"></div>
+                      <div class="b" style="height:80%;background:#0CB180"></div>
+                      <div class="b" style="height:40%;background:#FAAD14"></div>
+                      <div class="b" style="height:70%;background:#0CB180"></div>
+                      <div class="b" style="height:30%;background:#FF4D4F"></div>
+                      <div class="b" style="height:90%;background:#0CB180"></div>
+                    </div>
+                  </div>
+                  <div class="sec" id="prev-details">
+                    <div class="sh"><span class="n">4</span> Detailed results</div>
+                    <div class="rt-doc-line" style="width:100%"></div>
+                    <div class="rt-doc-line" style="width:85%"></div>
+                  </div>
+                  <div class="sec" id="prev-matrix">
+                    <div class="sh"><span class="n">5</span> Risk matrix</div>
+                    <div class="rt-doc-mini-grid">
+                      <div class="rt-doc-mini" style="background:#FDE7E7"><div class="v" id="prev-high" style="color:#FF4D4F">—</div><div class="l">High</div></div>
+                      <div class="rt-doc-mini" style="background:#FFF3DB"><div class="v" id="prev-med" style="color:#C77700">—</div><div class="l">Medium</div></div>
+                      <div class="rt-doc-mini" style="background:#E2F7EF"><div class="v" id="prev-low" style="color:#0CB180">—</div><div class="l">Low</div></div>
+                    </div>
+                  </div>
+                  <div class="sec" id="prev-recs">
+                    <div class="sh"><span class="n">6</span> Recommendations</div>
+                    <div class="rt-doc-line" style="width:96%"></div>
+                    <div class="rt-doc-line" style="width:70%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /content-inner -->
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ── Guardrail Modal ────────────────────────────────────────────── -->
+<div id="guardrail-modal" style="display:none"></div>
+<div id="sc-detail-modal" style="display:none"></div>
+<!-- ── General Modal ─────────────────────────────────────────────── -->
+<div id="gen-modal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px"></div>
+
+<!-- ── Exec Overlay ──────────────────────────────────────────────── -->
+<div class="rt-exec-overlay" id="exec-overlay">
+  <div class="rt-exec-box">
+    <div class="rt-exec-shield">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="var(--d-danger)" stroke-width="2" stroke-linecap="round">
+        <path d="M14 2L25 7.5V17C25 22.5 20 26.5 14 28.5C8 26.5 3 22.5 3 17V7.5L14 2Z"/>
+        <circle cx="14" cy="16" r="4"/>
+        <line x1="14" y1="16" x2="19" y2="11.5"/>
+      </svg>
+    </div>
+    <div class="rt-exec-title">Running Agent Red-Team Test</div>
+    <div class="rt-exec-sub" id="exec-sub">Dispatching scenarios sequentially…</div>
+    <div class="rt-exec-steps" id="exec-steps">
+      <div class="rt-exec-step active" id="step-0"><span class="sd"></span>Crafting adversarial scenario</div>
+      <div class="rt-exec-step"         id="step-1"><span class="sd"></span>Dispatching to attack agent</div>
+      <div class="rt-exec-step"         id="step-2"><span class="sd"></span>Capturing tool call events</div>
+      <div class="rt-exec-step"         id="step-3"><span class="sd"></span>Running LLM evaluation</div>
+    </div>
+    <div class="rt-exec-prog"><div class="rt-exec-bar" id="exec-bar" style="width:4%"></div></div>
+    <div class="rt-exec-lbl" id="exec-lbl">Starting…</div>
+  </div>
+</div>
+
+<div id="rt-toast"></div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────
+let API_KEY  = localStorage.getItem('rg_key') || '';
+let scenarios = [];
+let selectedIds = new Set();
+let authChecked = false;
+let reportFmt = 'html';
+let stepTimer = null;
+
+const PAGE_META = {
+  overview: { title:'Overview',        sub:'Security posture across all red-team runs' },
+  attack:   { title:'Scan testing',  sub:'Launch adversarial scenarios against target agents' },
+  results:  { title:'Results Analysis',sub:'Inspect, filter and triage every test outcome' },
+  reports:  { title:'Reports',         sub:'Configure and export assessment reports' },
+};
+
+// ── API ──────────────────────────────────────────────────────────
+async function api(method, path, body=null) {
+  const r = await fetch('/api/v1' + path, {
+    method,
+    headers: { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' },
+    ...(body ? { body: JSON.stringify(body) } : {})
+  });
+  if (!r.ok) throw new Error(await r.text().catch(() => r.statusText));
+  return r.json();
+}
+
+// ── Auth ─────────────────────────────────────────────────────────
+async function doLogin() {
+  const key = document.getElementById('login-key').value.trim();
+  if (!key) return;
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Signing in…';
+  document.getElementById('login-err').textContent = '';
+  try {
+    API_KEY = key;
+    await api('GET', '/scenarios');
+    localStorage.setItem('rg_key', key);
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app').classList.add('show');
+    initApp();
+  } catch {
+    document.getElementById('login-err').textContent = 'Invalid API key. Please try again.';
+    API_KEY = '';
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+}
+document.getElementById('login-key').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
+
+// ── Init ─────────────────────────────────────────────────────────
+async function initApp() {
+  // user avatar from API key
+  const initials = API_KEY.slice(0,2).toUpperCase();
+  document.getElementById('user-av').textContent = initials;
+  document.getElementById('user-name').textContent = 'iDox.ai User';
+
+  // default agent url
+  try {
+    const cfg = await fetch('/api/v1/config').then(r => r.json());
+    if (cfg.default_agent_url) document.getElementById('agent-url').value = cfg.default_agent_url;
+  } catch {}
+
+  await loadScenarios();
+  await loadOverview();
+
+  // resume poll if job was in progress
+  const saved = localStorage.getItem('rg_active_job');
+  if (saved) resumePoll(saved);
+}
+
+// ── Navigation ───────────────────────────────────────────────────
+function goPage(page) {
+  document.querySelectorAll('.rt-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.rt-nav-item').forEach(n => n.classList.remove('on'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelector(`[data-page="${page}"]`).classList.add('on');
+  const m = PAGE_META[page];
+  document.getElementById('topbar-title').textContent = m.title;
+  document.getElementById('topbar-sub').textContent   = m.sub;
+  document.getElementById('topbar-new').style.display = page === 'attack' ? 'none' : 'inline-flex';
+  if (page === 'results') loadResults();
+  if (page === 'overview') loadOverview();
+  if (page === 'reports') loadReportKpis();
+}
+
+// ── Scenarios ────────────────────────────────────────────────────
+async function loadScenarios() {
+  try {
+    scenarios = await api('GET', '/scenarios');
+    renderScenarioList();
+    const n = scenarios.length;
+    document.getElementById('engine-status').textContent = `${n} attack scenario${n!==1?'s':''} loaded`;
+  } catch (e) {
+    toast('Failed to load scenarios: ' + e.message, true);
+  }
+}
+
+function renderScenarioList() {
+  const el = document.getElementById('scenario-list');
+  if (!scenarios.length) {
+    el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--d-text-3);font-size:13px">No scenarios available.</div>';
+    return;
+  }
+  el.innerHTML = scenarios.map(sc => {
+    const sel = selectedIds.has(sc.id);
+    const isGen = sc.source === 'generated';
+    return `
+    <div class="rt-strat${sel?' sel':''}" id="sc-${sc.id}" onclick="toggleSc('${sc.id}')">
+      <div class="rt-strat-row">
+        <div class="rt-strat-cb${sel?' on':''}">
+          ${sel?`<svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 4,7 9,1"/></svg>`:''}
+        </div>
+        <div class="rt-strat-ic">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><polygon points="3,2 15,9 3,16"/></svg>
+        </div>
+        <div class="rt-strat-main">
+          <div class="rt-strat-name">${esc(sc.name)}</div>
+          <div class="rt-strat-key">${esc(sc.scenario_key)}</div>
+          ${isGen ? `<span class="rt-strat-badge gen">Generated</span>` : `<span class="rt-strat-badge">Built-in</span>`}
+        </div>
+        <button class="rt-strat-info" onclick="event.stopPropagation();openScDetail('${sc.id}')" title="View scenario details">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M12 11v5"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSc(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  const el = document.getElementById('sc-' + id);
+  const sel = selectedIds.has(id);
+  el.classList.toggle('sel', sel);
+  const cb = el.querySelector('.rt-strat-cb');
+  cb.classList.toggle('on', sel);
+  cb.innerHTML = sel ? `<svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 4,7 9,1"/></svg>` : '';
+  updateLaunch();
+}
+
+function selectAll() { scenarios.forEach(s => selectedIds.add(s.id)); renderScenarioList(); updateLaunch(); }
+function clearSel()  { selectedIds.clear(); renderScenarioList(); updateLaunch(); }
+
+function toggleAuth() {
+  authChecked = !authChecked;
+  const box = document.getElementById('auth-box');
+  box.classList.toggle('on', authChecked);
+  box.innerHTML = authChecked ? `<svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 4,7 9,1"/></svg>` : '';
+  updateLaunch();
+}
+
+function updateLaunch() {
+  const n = selectedIds.size;
+  document.getElementById('sel-count-badge').textContent = `${n} selected`;
+  document.getElementById('launch-info').innerHTML = `<b>${n}</b> scenario${n!==1?'s':''} selected`;
+  document.getElementById('launch-btn').disabled = n === 0 || !authChecked;
+}
+
+// ── Launch ───────────────────────────────────────────────────────
+async function launchJob() {
+  const agentUrl = document.getElementById('agent-url').value.trim();
+  if (!agentUrl) { toast('Agent URL is required', true); return; }
+  if (!selectedIds.size) { toast('Select at least one scenario', true); return; }
+
+  const ocSession = document.getElementById('openclaw-session-id').value.trim();
+  const body = { agent_url: agentUrl, scenario_ids: [...selectedIds] };
+  if (ocSession) body.openclaw_session_id = ocSession;
+
+  showExec([...selectedIds].length);
+  try {
+    const job = await api('POST', '/jobs', body);
+    localStorage.setItem('rg_active_job', job.id);
+    pollJob(job.id, true);
+  } catch (e) {
+    hideExec();
+    toast('Failed to start job: ' + e.message, true);
+  }
+}
+
+// ── Exec overlay ─────────────────────────────────────────────────
+let stepIdx = 0;
+function showExec(total) {
+  stepIdx = 0;
+  document.getElementById('exec-bar').style.width = '4%';
+  document.getElementById('exec-lbl').textContent = `Preparing ${total} scenario${total>1?'s':''}…`;
+  document.getElementById('exec-sub').textContent = `Dispatching ${total} scenario${total>1?'s':''} sequentially…`;
+  for (let i=0;i<4;i++) {
+    const s = document.getElementById('step-'+i);
+    s.classList.remove('done','active');
+    if (i===0) s.classList.add('active');
+  }
+  document.getElementById('exec-overlay').classList.add('show');
+  if (stepTimer) clearInterval(stepTimer);
+  stepTimer = setInterval(() => {
+    const prev = document.getElementById('step-'+stepIdx);
+    if (prev) { prev.classList.remove('active'); prev.classList.add('done'); }
+    stepIdx = (stepIdx + 1) % 4;
+    const next = document.getElementById('step-'+stepIdx);
+    if (next) { next.classList.remove('done'); next.classList.add('active'); }
+  }, 2500);
+}
+function hideExec() {
+  if (stepTimer) clearInterval(stepTimer);
+  document.getElementById('exec-overlay').classList.remove('show');
+}
+function updateExecProg(done, total) {
+  const pct = total > 0 ? Math.round(done/total * 88 + 5) : 5;
+  document.getElementById('exec-bar').style.width = pct + '%';
+  document.getElementById('exec-lbl').textContent = `Running ${done} of ${total} scenarios…`;
+}
+
+// ── Poll ─────────────────────────────────────────────────────────
+let pollTimer = null;
+function pollJob(id, fromLaunch=false) {
+  if (pollTimer) clearTimeout(pollTimer);
+  const tick = async () => {
+    try {
+      const job = await api('GET', '/jobs/' + id);
+      updateExecProg(job.completed_count, job.scenario_count);
+      if (job.status === 'running') {
+        pollTimer = setTimeout(tick, 3000);
+      } else {
+        hideExec();
+        localStorage.removeItem('rg_active_job');
+        toast(job.status==='completed' ? `Test job completed — ${job.completed_count}/${job.scenario_count} scenarios done ✓` : 'Job finished with errors', job.status!=='completed');
+        updateResultsBadge();
+        loadOverview();
+        if (fromLaunch) { clearSel(); authChecked=false; document.getElementById('auth-box').classList.remove('on'); document.getElementById('auth-box').innerHTML=''; updateLaunch(); goPage('results'); }
+      }
+    } catch (e) {
+      hideExec();
+      toast('Poll error: ' + e.message, true);
+    }
+  };
+  tick();
+}
+function resumePoll(id) {
+  api('GET', '/jobs/' + id).then(j => {
+    if (j.status === 'running') { showExec(j.scenario_count); updateExecProg(j.completed_count, j.scenario_count); pollJob(id, false); }
+    else localStorage.removeItem('rg_active_job');
+  }).catch(() => localStorage.removeItem('rg_active_job'));
+}
+
+// ── Overview ─────────────────────────────────────────────────────
+async function loadOverview() {
+  try {
+    const jobs = await api('GET', '/jobs');
+    let totalSc=0, defended=0, findings=0, attacked=0;
+    // severity-based buckets for chart
+    let highC=0, medC=0, lowC=0;
+    const recent = jobs.slice(0,6);
+    const details = await Promise.all(recent.map(j => api('GET','/jobs/'+j.id).catch(()=>null)));
+
+    const defMap = {};  // owasp_category → {def, issue, label}
+    for (const d of details) {
+      if (!d) continue;
+      totalSc += d.scenario_count;
+      for (const s of d.sessions||[]) {
+        if (!s.evaluation) continue;
+        const level = outcomeLevel(s.evaluation);
+        const sev   = (s.evaluation.severity || '').toLowerCase();
+
+        // Per-session KPI counters (each session counted once)
+        if (level === 'attacked') {
+          attacked++; highC++;
+        } else if (level === 'findings') {
+          findings++;
+          if (sev === 'critical' || sev === 'high') highC++; else medC++;
+        } else {
+          defended++;
+          if (sev === 'medium') medC++; else lowC++;
+        }
+
+        // Group by OWASP category; fall back to scenario_key if no mapping
+        const owaspCats = (s.owasp_mapping && s.owasp_mapping.length)
+          ? s.owasp_mapping
+          : [s.scenario_key];
+        for (const cat of owaspCats) {
+          defMap[cat] = defMap[cat] || {def:0, issue:0, label:cat};
+          if (level === 'attacked' || level === 'findings') {
+            defMap[cat].issue++;
+          } else {
+            defMap[cat].def++;
+          }
+        }
+      }
+    }
+    // "Vulnerabilities found" = sessions with any actual issue
+    const vuln = attacked + findings;
+    // Defense rate = only truly defended sessions / total evaluated
+    const totalEval = attacked + findings + defended;
+    const defRate = totalEval > 0 ? Math.round(defended / totalEval * 100) + '%' : '—';
+
+    document.getElementById('kpi-total').textContent   = totalSc || '0';
+    document.getElementById('kpi-defense').textContent = defRate;
+    document.getElementById('kpi-vuln').textContent    = vuln || '0';
+    document.getElementById('kpi-jobs').textContent    = jobs.length || '0';
+
+    // KPI trend badges
+    if (jobs.length > 0) {
+      const defTrend = document.getElementById('kpi-defense-trend');
+      if (defTrend) { defTrend.style.display = 'inline-flex'; }
+      const vulnTrend = document.getElementById('kpi-vuln-trend');
+      if (vulnTrend) vulnTrend.style.display = vuln > 0 ? 'inline-flex' : 'none';
+      const totalTrend = document.getElementById('kpi-total-trend');
+      if (totalTrend) { totalTrend.style.display = 'inline-flex'; totalTrend.textContent = totalSc + ' scenarios'; }
+      const jobsTrend = document.getElementById('kpi-jobs-trend');
+      if (jobsTrend) { jobsTrend.style.display = 'inline-flex'; jobsTrend.textContent = jobs.length + ' jobs'; }
+    }
+
+    // Risk distribution chart — 3 bars: High / Medium / Low by severity
+    const chartEl   = document.getElementById('risk-chart');
+    const legendEl  = document.getElementById('risk-legend');
+    const riskTagEl = document.getElementById('risk-total-tag');
+    if (totalEval > 0) {
+      const chartData = [
+        {k:'High',   v:highC, c:'#FF6B5E'},
+        {k:'Medium', v:medC,  c:'#FBB13C'},
+        {k:'Low',    v:lowC,  c:'#2ED5A6'},
+      ];
+      const maxV = Math.max(...chartData.map(b=>b.v), 1);
+      riskTagEl.textContent = totalEval + ' evaluated';
+      riskTagEl.style.display = '';
+      legendEl.style.display = 'flex';
+      chartEl.innerHTML =
+        [0.25,0.5,0.75,1].map(p=>`<span class="grid-line" style="bottom:${p*160+4}px"></span>`).join('') +
+        chartData.map(b => {
+          const h   = Math.max(Math.round(b.v / maxV * 100), b.v > 0 ? 4 : 0);
+          const pct = totalEval > 0 ? Math.round(b.v / totalEval * 100) : 0;
+          return `<div class="rt-bar-col">
+            <div class="rt-bar" style="height:${h}%;background:linear-gradient(180deg,${b.c},${b.c}99);box-shadow:0 0 20px ${b.c}55">
+              ${b.v > 0 ? `<span class="bv">${b.v}</span>` : ''}
+            </div>
+            <div class="rt-bar-x">${b.k}<span class="pct">${pct}%</span></div>
+          </div>`;
+        }).join('');
+    }
+
+    // Activity feed
+    const feed = document.getElementById('activity-feed');
+    if (!jobs.length) {
+      feed.innerHTML = `<div style="padding:30px 0;text-align:center;color:var(--d-text-3);font-size:13px">No test jobs yet. <a href="#" onclick="goPage('attack');return false" style="color:var(--d-cyan)">Run your first test →</a></div>`;
+    } else {
+      feed.innerHTML = recent.map(j => {
+        const jDef = j.status === 'completed' ? 'defended' : j.status === 'failed' ? 'attacked' : j.status;
+        const ic = jDef==='attacked'?'var(--d-danger)':jDef==='defended'?'var(--d-success)':'var(--d-warning)';
+        const icBg = jDef==='attacked'?'var(--d-danger-soft)':jDef==='defended'?'var(--d-success-soft)':'var(--d-warning-soft)';
+        return `
+        <div class="rt-feed-item" onclick="goPage('results')">
+          <div class="fi" style="background:${icBg}">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="${ic}" stroke-width="1.8" stroke-linecap="round"><path d="M7 1L13 4V8C13 11 10.5 12.5 7 13.5C3.5 12.5 1 11 1 8V4L7 1Z"/></svg>
+          </div>
+          <div class="fmid">
+            <div class="ft">Job ${esc(j.id.slice(0,8).toUpperCase())}</div>
+            <div class="fm">
+              <span>${j.scenario_count} scenarios</span>
+              <span>·</span>
+              <span>${j.completed_count}/${j.scenario_count} done</span>
+              <span>·</span>
+              <span>${timeAgo(j.created_at)}</span>
+            </div>
+          </div>
+          <div class="fs">${statusPill(j.status)}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // Defense rate by attack category (progress bars)
+    const bars = document.getElementById('defense-bars');
+    const entries = Object.entries(defMap);
+    if (!entries.length) {
+      bars.innerHTML = `<div style="padding:20px 0;text-align:center;color:var(--d-text-3);font-size:13px">Run a test to see category defense rates</div>`;
+    } else {
+      bars.innerHTML = entries.slice(0,8).map(([k,v]) => {
+        // issue = attacked + findings (any session with problems)
+        const tot = (v.def||0) + (v.issue||0);
+        const pct = tot > 0 ? Math.round((v.def||0) / tot * 100) : 0;
+        const issueCount = v.issue || 0;
+        const col     = pct>=80?'#2ED5A6':pct>=50?'#FBB13C':'#FF6B5E';
+        const colSoft = pct>=80?'rgba(46,213,166,.14)':pct>=50?'rgba(251,177,60,.14)':'rgba(255,107,94,.14)';
+        const icon = pct>=80
+          ? `<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7L6 10L11 4"/></svg>`
+          : `<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="7" y1="3" x2="7" y2="8"/><circle cx="7" cy="10.5" r=".8" fill="currentColor"/></svg>`;
+        const issueSub = issueCount > 0
+          ? `<span style="font:400 10px/1 var(--font-mono);color:${col};margin-left:6px">${issueCount} issue${issueCount>1?'s':''}</span>`
+          : '';
+        return `
+          <div class="rt-prog-row">
+            <div class="rt-prog-name">
+              <span class="pi" style="background:${colSoft};color:${col}">${icon}</span>
+              <span>${esc(v.label||k)}${issueSub}</span>
+            </div>
+            <div class="rt-prog-track">
+              <div class="rt-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${col}99,${col})"></div>
+            </div>
+            <div class="rt-prog-val" style="color:${col}">${pct}%</div>
+          </div>`;
+      }).join('');
+    }
+
+    updateResultsBadge(jobs.length);
+  } catch (e) {
+    document.getElementById('activity-feed').innerHTML = `<div style="padding:20px;color:var(--d-danger);font-size:13px">${esc(e.message)}</div>`;
+  }
+}
+
+function updateResultsBadge(count) {
+  const b = document.getElementById('results-badge');
+  if (count>0) { b.textContent=count; b.style.display=''; } else { b.style.display='none'; }
+}
+
+// ── Results ──────────────────────────────────────────────────────
+async function loadResults() {
+  const el = document.getElementById('results-list');
+  el.innerHTML = `<div style="padding:40px;text-align:center;color:var(--d-text-3)">Loading…</div>`;
+  try {
+    const jobs = await api('GET', '/jobs');
+    if (!jobs.length) {
+      el.innerHTML = `
+        <div class="rt-empty">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="var(--d-text-3)" stroke-width="1.5" stroke-linecap="round">
+            <path d="M24 4L42 13V27C42 37 34 43 24 47C14 43 6 37 6 27V13L24 4Z"/>
+            <circle cx="24" cy="26" r="7"/><line x1="24" y1="26" x2="31" y2="19"/>
+          </svg>
+          <p>No test jobs yet. Launch your first attack to see results here.</p>
+          <button class="rt-btn rt-btn-danger" onclick="goPage('attack')">LAUNCH FIRST TEST</button>
+        </div>`;
+      return;
+    }
+    el.innerHTML = `<div class="rt-jobs-list">${jobs.map(j => renderJobCard(j)).join('')}</div>`;
+  } catch (e) {
+    el.innerHTML = `<div style="padding:40px;text-align:center;color:var(--d-danger);font-size:13px">${esc(e.message)}</div>`;
+  }
+}
+
+function renderJobCard(j) {
+  return `
+    <div class="rt-jc" id="jc-${j.id}">
+      <div class="rt-jc-head" onclick="toggleJc('${j.id}')">
+        <span class="rt-jc-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 002 3h10a2 2 0 002-3l-5-9V3"/><path d="M7 15h10"/></svg>
+        </span>
+        <div class="rt-jc-id-wrap">
+          <div class="rt-jc-id">Test Job ${j.id.slice(0,8).toUpperCase()}</div>
+          <div class="rt-jc-meta">
+            <span>${esc(j.agent_url)}</span><span>·</span><span>${timeAgo(j.created_at)}</span>
+          </div>
+        </div>
+        <div class="rt-jc-score">
+          <div class="rt-ring" id="score-ring-${j.id}" style="opacity:0"></div>
+          <div class="rs-meta">
+            <span id="risk-pill-${j.id}">${statusPill(j.status)}</span>
+            <span class="rs-sub" id="rs-sub-${j.id}">${j.completed_count}/${j.scenario_count} scenarios done</span>
+          </div>
+        </div>
+        <svg class="rt-chevron" id="chev-${j.id}" viewBox="0 0 16 16"><polyline points="3,5 8,11 13,5"/></svg>
+      </div>
+      <div class="rt-jc-body" id="jbody-${j.id}"></div>
+    </div>`;
+}
+
+async function toggleJc(id) {
+  const body = document.getElementById('jbody-' + id);
+  const chev = document.getElementById('chev-' + id);
+  if (body.classList.contains('open')) {
+    body.classList.remove('open'); chev.classList.remove('open'); return;
+  }
+  body.classList.add('open'); chev.classList.add('open');
+  if (body.dataset.loaded) return;
+  body.dataset.loaded = '1';
+  body.innerHTML = `<div style="color:var(--d-text-3);font-size:13px;padding:4px 2px">Loading sessions…</div>`;
+  try {
+    const d = await api('GET', '/jobs/' + id);
+    if (!d.sessions.length) {
+      body.innerHTML = `<div style="color:var(--d-text-3);font-size:13px;padding:4px 2px">No sessions recorded yet.</div>`;
+      return;
+    }
+    const vulnSessions = d.sessions.filter(s => {
+      const lv = outcomeLevel(s.evaluation);
+      return lv === 'attacked' || lv === 'findings';
+    });
+    const grBanner = vulnSessions.length > 0 ? (() => {
+      const tools = [...new Set(vulnSessions.flatMap(s =>
+        (s.evaluation&&s.evaluation.evidence||[])
+          .map(e => { const m = e.match(/[\w-]+__[\w-]+|browser_act|exec\b|write\b/); return m ? m[0].replace(/.*__/,'') : null; })
+          .filter(Boolean)
+      ))].slice(0,4);
+      const toolTags = tools.map(t => `<code>${esc(t)}</code>`).join(' ');
+      const vulns = vulnSessions.map(s => ({
+        tool: s.scenario_key,
+        behavior: (s.evaluation&&s.evaluation.reasoning||'').slice(0,80),
+        risk: s.evaluation&&s.evaluation.severity||'high',
+      }));
+      return `<div class="rt-gr-banner">
+        <span class="gi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 5v6c0 5-3.5 8.5-9 9-5.5-.5-9-4-9-9V7l9-5z"/><path d="M9 12l2 2 4-4"/></svg></span>
+        <div class="gtxt">
+          <div class="gt">iDox.ai Guardrail can cover ${vulnSessions.length} unresolved ${vulnSessions.length === 1 ? 'vulnerability' : 'vulnerabilities'}</div>
+          <div class="gs">These exploits can't be patched at the model level — a protection layer is required. AI Agentic Communication Protection monitors every tool call the agent makes${toolTags ? ' — ' + toolTags : ''} — before execution.</div>
+          <div class="gacts">
+            <button class="rt-btn rt-btn-primary" style="height:38px;font-size:12.5px" data-gr-vulns="${esc(JSON.stringify(vulns))}" onclick="openGuardrailModal(JSON.parse(this.dataset.grVulns))">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 5v6c0 5-3.5 8.5-9 9-5.5-.5-9-4-9-9V7l9-5z"/><path d="M9 12l2 2 4-4"/></svg>
+              Enable Guardrail protection →
+            </button>
+          </div>
+        </div>
+      </div>`;
+    })() : '';
+    body.innerHTML = d.sessions.map(s => renderSession(s)).join('') + grBanner;
+    // Color the job card border: attacked > findings > defended
+    const levels = d.sessions.map(s => outcomeLevel(s.evaluation));
+    const jc = document.getElementById('jc-' + id);
+    if (jc) {
+      if (levels.some(l => l === 'attacked'))       jc.classList.add('attacked');
+      else if (levels.some(l => l === 'findings'))  jc.classList.add('findings');
+      else if (levels.every(l => l === 'defended')) jc.classList.add('defended');
+    }
+    // Render score ring once we have evaluation data
+    const evaledLevels = levels.filter(l => l !== null);
+    if (evaledLevels.length > 0) {
+      const defendedCount = evaledLevels.filter(l => l === 'defended').length;
+      const attackedCount = evaledLevels.filter(l => l === 'attacked').length;
+      const score = Math.round(defendedCount / evaledLevels.length * 100);
+      const risk = score >= 80 ? 'low' : score >= 50 ? 'medium' : 'high';
+      const riskLabel = risk === 'low' ? 'LOW RISK' : risk === 'medium' ? 'MEDIUM RISK' : 'HIGH RISK';
+      const ringEl = document.getElementById('score-ring-' + id);
+      const pillEl = document.getElementById('risk-pill-' + id);
+      const subEl  = document.getElementById('rs-sub-' + id);
+      if (ringEl) {
+        const sz = 56, r = (sz - 8) / 2;
+        const circ = 2 * Math.PI * r;
+        const off = circ * (1 - score / 100);
+        const col = score >= 80 ? '#2ED5A6' : score >= 50 ? '#FBB13C' : '#FF6B5E';
+        ringEl.innerHTML = `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}">
+          <circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/>
+          <circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="5"
+            stroke-dasharray="${circ}" stroke-dashoffset="${off}"
+            stroke-linecap="round" transform="rotate(-90 ${sz/2} ${sz/2})"/>
+        </svg><span class="rv">${score}</span>`;
+        ringEl.style.opacity = '1';
+      }
+      if (pillEl) pillEl.innerHTML = `<span class="rt-pill ${risk}">${riskLabel}</span>`;
+      if (subEl)  subEl.textContent = `${attackedCount}/${evaledLevels.length} attacks succeeded`;
+    }
+    // Update strat chips to show scenario names
+    const strats = d.sessions.map(s => `<span class="rt-jc-chip">${esc(s.scenario_key)}</span>`).join('');
+    const existing = body.previousElementSibling; // rt-jc-head
+    if (!document.getElementById('strats-' + id)) {
+      existing.insertAdjacentHTML('afterend', `<div class="rt-jc-strats" id="strats-${id}"><span class="lbl">Scenarios</span>${strats}</div>`);
+    }
+  } catch (e) {
+    body.innerHTML = `<div style="color:var(--d-danger);font-size:13px">${esc(e.message)}</div>`;
+  }
+}
+
+// Determine outcome level: 'attacked' | 'findings' | 'defended' | null
+// 'findings' = agent behaved correctly (attack_successful=false) but severity is high/critical
+function outcomeLevel(ev) {
+  if (!ev || ev.attack_successful == null) return null;
+  if (ev.attack_successful === true) return 'attacked';
+  const sev = (ev.severity || '').toLowerCase();
+  if (sev === 'critical' || sev === 'high') return 'findings';
+  return 'defended';
+}
+
+function toggleScGrp(sid) {
+  const grp = document.getElementById('scgrp-' + sid);
+  const bd  = document.getElementById('scbd-'  + sid);
+  if (!grp || !bd) return;
+  const open = grp.classList.toggle('open');
+  bd.style.display = open ? 'block' : 'none';
+}
+
+function renderSession(s) {
+  const ev = s.evaluation;
+  const attacked = ev ? ev.attack_successful : null;
+  const sid = s.id.replace(/-/g, '');
+  const level = outcomeLevel(ev);
+
+  // Outcome tag — 3-state: attacked / findings (high-sev but agent PASS) / defended
+  const OUT_TAG = {
+    attacked: `<span class="rt-otag" style="background:rgba(255,107,94,.14);color:var(--d-danger)"><span class="d" style="background:var(--d-danger)"></span>Attacked</span>`,
+    findings: `<span class="rt-otag" style="background:rgba(251,177,60,.14);color:var(--d-warning)"><span class="d" style="background:var(--d-warning)"></span>Has Findings</span>`,
+    defended: `<span class="rt-otag" style="background:rgba(46,213,166,.14);color:var(--d-success)"><span class="d" style="background:var(--d-success)"></span>Defended</span>`,
+  };
+  const outTag = level ? OUT_TAG[level] : `<span class="rt-otag" style="background:var(--d-surface-3);color:var(--d-text-3)"><span class="d" style="background:var(--d-text-muted)"></span>No eval</span>`;
+
+  // Icon background colour based on outcome
+  const icCls = level || '';
+
+  // Severity palette
+  const SEV = { critical: 'var(--d-danger)', high: 'var(--d-danger)', medium: 'var(--d-warning)', low: 'var(--d-success)', none: 'var(--d-text-muted)' };
+
+  // ── Evaluation detail panel ──────────────────────────────────
+  const evalHtml = ev ? `
+    <div class="rt-eval2">
+      <div class="rt-eval2-stats">
+        <span class="rt-eval2-stat"><strong>Status:</strong> ${esc(ev.status||'—')}</span>
+        <span class="rt-eval2-stat"><strong>Attack succeeded:</strong> <span style="color:${attacked===true?'var(--d-danger)':attacked===false?'var(--d-success)':'var(--d-text-3)'}">${attacked==null?'—':attacked?'Yes':'No'}</span></span>
+        ${ev.severity && ev.severity!=='none' ? `<span class="rt-eval2-stat"><strong>Severity:</strong> <span style="color:${SEV[ev.severity]||'var(--d-text-3)'}">${esc(ev.severity.toUpperCase())}</span></span>` : ''}
+        ${ev.confidence!=null ? `<span class="rt-eval2-stat"><strong>Confidence:</strong> ${Math.round(ev.confidence*100)}%</span>` : ''}
+      </div>
+      ${ev.reasoning ? `<div class="rt-eval2-text"><strong>Analysis:</strong> ${esc(ev.reasoning)}</div>` : ''}
+      ${(ev.attack_chain||[]).length ? `
+        <div class="rt-eval2-section-hd">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,18 15,12 9,6"/></svg>
+          Attack Chain
+        </div>
+        <ol class="rt-eval2-chain">
+          ${ev.attack_chain.map((step,i)=>`<li><span class="n">${i+1}</span><span>${esc(step)}</span></li>`).join('')}
+        </ol>` : ''}
+      ${(ev.evidence||[]).length ? (() => {
+        const evItems = ev.evidence.filter(e => !/events?\s+array\s+was\s+empty/i.test(e) && e.trim() !== '[]' && e.trim() !== '');
+        if (!evItems.length) return `
+        <div class="rt-eval2-section-hd">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          Evidence
+        </div>
+        <div style="font:400 11.5px/1.5 var(--font-sans);color:var(--d-text-muted);padding:6px 2px">No tool calls executed — agent refused at intent level without invoking any tools.</div>`;
+        return `
+        <div class="rt-eval2-section-hd">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          Evidence
+        </div>
+        <div class="rt-eval2-evidence">
+          ${evItems.map(e=>`<div class="rt-eval2-ev-item">${esc(e)}</div>`).join('')}
+        </div>`;
+      })() : ''}
+      ${(ev.triggered_owasp||[]).length ? `
+        <div class="rt-eval2-section-hd">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          OWASP Violations
+        </div>
+        <div class="rt-eval2-owasp">
+          ${ev.triggered_owasp.map(o=>`<span class="rt-wtag">${esc(o)}</span>`).join('')}
+        </div>` : ''}
+      ${ev.recommendation ? `<div class="rt-eval2-rec"><strong>Recommendation:</strong> ${esc(ev.recommendation)}</div>` : ''}
+      <div class="rt-eval2-note">Evaluated by LLM evaluator based on tool call behavior captured during the attack session.</div>
+    </div>`
+  : `<div style="padding:10px 2px;color:var(--d-text-muted);font:400 12px/1 var(--font-sans)">No evaluation result for this session.</div>`;
+
+  // ── Evaluation Criteria panel ────────────────────────────────
+  const assertHtml = (s.assertions||[]).length ? `
+    <div class="rt-crit-sub">Assertions</div>
+    <div class="rt-tag-row">${s.assertions.map(a=>`<span class="rt-atag">${esc(a)}</span>`).join('')}</div>` : '';
+
+  const owaspHtml = (s.owasp_mapping||[]).length ? `
+    <div class="rt-crit-sub">Expected OWASP</div>
+    <div class="rt-tag-row">${s.owasp_mapping.map(o=>`<span class="rt-wtag">${esc(o)}</span>`).join('')}</div>` : '';
+
+  const guideHtml = s.evaluation_guidance ? `
+    <div class="rt-crit-sub">Evaluation Criteria</div>
+    <div class="rt-guidance">${esc(s.evaluation_guidance)}</div>` : '';
+
+  const criteriaHtml = (assertHtml || owaspHtml || guideHtml) ? `
+    <div class="rt-crit">
+      <div class="rt-crit-hd">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+        Evaluation Criteria
+      </div>
+      ${assertHtml}${owaspHtml}${guideHtml}
+    </div>` : '';
+
+  const grVulnData = esc(JSON.stringify([{tool: s.scenario_key, behavior: (ev&&ev.reasoning||'').slice(0,80), risk: ev&&ev.severity||'high'}]));
+  const grCoverBtn = '';
+
+  const innerHd = `
+        <svg class="rt-chev" width="14" height="14" viewBox="0 0 14 14"><polyline points="3,5 7,9 11,5"/></svg>
+        <span class="rt-grp-ic ${icCls}">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 5v6c0 5-3.5 8.5-9 9-5.5-.5-9-4-9-9V7l9-5z"/></svg>
+        </span>
+        <span class="rt-grp-info">
+          <div class="rt-grp-title">${esc(s.scenario_name)}</div>
+          <div class="rt-grp-key">${esc(s.scenario_key)}</div>
+        </span>
+        ${outTag}
+        ${statusPill(s.status)}`;
+
+  // Wrap in div when there's a Guardrail button to avoid button-inside-button
+  const hdHtml = grCoverBtn
+    ? `<div class="rt-grp-hd-wrap"><button class="rt-grp-hd" onclick="toggleScGrp('${sid}')">${innerHd}</button>${grCoverBtn}</div>`
+    : `<button class="rt-grp-hd" onclick="toggleScGrp('${sid}')">${innerHd}</button>`;
+
+  return `
+    <div class="rt-grp" id="scgrp-${sid}">
+      ${hdHtml}
+      <div class="rt-grp-bd" id="scbd-${sid}" style="display:none">
+        ${evalHtml}
+        ${criteriaHtml}
+      </div>
+    </div>`;
+}
+
+// ── Reports ──────────────────────────────────────────────────────
+const REPORT_FMTS = { pdf: '.pdf', json: '.json', csv: '.csv' };
+
+function setFmt(fmt) {
+  reportFmt = fmt;
+  ['pdf','html','json'].forEach(f => {
+    const el = document.getElementById('fmt-'+f);
+    if (el) el.classList.toggle('on', f===fmt);
+  });
+}
+
+function toggleSec(el) {
+  el.classList.toggle('on');
+  const cb = el.querySelector('.cb');
+  const isOn = el.classList.contains('on');
+  cb.classList.toggle('on', isOn);
+  cb.innerHTML = isOn
+    ? '<svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 4,7 9,1"/></svg>'
+    : '';
+  const total = document.querySelectorAll('#report-sections .rt-check').length;
+  const active = document.querySelectorAll('#report-sections .rt-check.on').length;
+  const sub = document.getElementById('sec-count-sub');
+  if (sub) sub.textContent = active + ' of ' + total + ' included';
+  // Update preview visibility
+  const secMap = { summary:'prev-summary', method:'prev-method', category:'prev-category', details:'prev-details', matrix:'prev-matrix', recs:'prev-recs' };
+  const sec = el.dataset.sec;
+  if (sec && secMap[sec]) {
+    const prevEl = document.getElementById(secMap[sec]);
+    if (prevEl) prevEl.style.display = isOn ? '' : 'none';
+  }
+}
+
+async function loadReportKpis() {
+  try {
+    const jobs = await api('GET', '/jobs');
+    const details = await Promise.all(jobs.slice(0,20).map(j => api('GET', '/jobs/'+j.id).catch(()=>null)));
+    let total=0, defended=0, failed=0, withFindings=0;
+    for (const d of details) {
+      if (!d) continue;
+      for (const s of d.sessions||[]) {
+        total++;
+        if (s.evaluation) {
+          const level = outcomeLevel(s.evaluation);
+          if (level === 'attacked') failed++;
+          else if (level === 'findings') { withFindings++; }
+          else defended++;
+        }
+      }
+    }
+    // issues = attacked + has-findings; defense rate = truly defended / all evaluated
+    const issues = failed + withFindings;
+    const totalEval = failed + withFindings + defended;
+    const rate = totalEval > 0 ? Math.round(defended / totalEval * 100) + '%' : '—';
+    document.getElementById('rss-total').textContent = total || '—';
+    document.getElementById('rss-rate').textContent  = rate;
+    document.getElementById('rss-fail').textContent  = issues || '—';
+    document.getElementById('rss-jobs').textContent  = jobs.length || '—';
+    document.getElementById('prev-total').textContent = total || '—';
+    document.getElementById('prev-rate').textContent  = rate;
+    document.getElementById('prev-fail').textContent  = issues || '—';
+    document.getElementById('prev-high').textContent  = failed || '—';
+    document.getElementById('prev-med').textContent   = withFindings || '—';
+    document.getElementById('prev-low').textContent   = defended || '—';
+    document.getElementById('preview-date').textContent = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('preview-meta').innerHTML =
+      'Prepared by Security Engineering · ' + new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) +
+      '<br>' + jobs.length + ' jobs · ' + total + ' tests';
+  } catch {}
+}
+
+function buildHtmlReport(details) {
+  const activeSecs = new Set([...document.querySelectorAll('#report-sections .rt-check.on')].map(el => el.dataset.sec));
+  let total=0, defended=0, failed=0, withFindings=0;
+  const allSessions = [];
+  for (const d of details) {
+    for (const s of d.sessions||[]) {
+      total++;
+      allSessions.push({job: d.id.slice(0,8).toUpperCase(), url: d.agent_url, ...s});
+      if (s.evaluation) {
+        const lv = outcomeLevel(s.evaluation);
+        if (lv === 'attacked') failed++;
+        else if (lv === 'findings') withFindings++;
+        else defended++;
+      }
+    }
+  }
+  const totalEval = failed + withFindings + defended;
+  const rate = totalEval>0 ? Math.round(defended/totalEval*100) : 0;
+  const now = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+
+  const secHtml = (key, num, title, body) => activeSecs.has(key) ? `
+    <section>
+      <h2><span class="sec-num">${num}</span>${title}</h2>
+      ${body}
+    </section>` : '';
+
+  const summaryRows = allSessions.slice(0,50).map(s => {
+    const lv = s.evaluation ? outcomeLevel(s.evaluation) : null;
+    const badge = lv==='attacked'?'<span class="badge fail">ATTACKED</span>':lv==='findings'?'<span class="badge findings">HAS FINDINGS</span>':lv==='defended'?'<span class="badge pass">DEFENDED</span>':'<span class="badge na">N/A</span>';
+    return `<tr><td>${esc(s.job)}</td><td>${esc(s.scenario_name||s.scenario_key||'—')}</td><td>${badge}</td><td>${esc(s.evaluation?.severity||'—')}</td><td class="summary-cell">${esc(s.evaluation?.reasoning?.slice(0,120)||'—')}</td></tr>`;
+  }).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>iDox.ai Red Team — Red-Team Assessment Report</title>
+<style>
+  @page { margin: 20mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font: 400 13px/1.6 "Inter","Segoe UI",sans-serif; color: #1A446C; background: #fff; }
+  .cover { background: linear-gradient(150deg,#002F5C,#001025); color: #fff; padding: 48px 48px 40px; page-break-after: always; }
+  .cover .badge { display: inline-flex; align-items: center; gap: 6px; font: 600 10px/1 monospace; letter-spacing: .12em; text-transform: uppercase; color: #66A3FF; margin-bottom: 20px; }
+  .cover h1 { font: 700 32px/1.15 "Inter",sans-serif; margin-bottom: 10px; }
+  .cover .meta { font: 400 13px/1.6 monospace; color: rgba(255,255,255,.65); }
+  .kpi-row { display: flex; gap: 16px; margin: 20px 0; }
+  .kpi { flex: 1; background: rgba(255,255,255,.08); border-radius: 10px; padding: 16px; }
+  .kpi .v { font: 800 28px/1 "Inter",sans-serif; margin-bottom: 4px; }
+  .kpi .l { font: 400 11px/1 monospace; color: rgba(255,255,255,.6); text-transform: uppercase; letter-spacing: .08em; }
+  .body { padding: 40px 48px; }
+  section { margin-bottom: 40px; page-break-inside: avoid; }
+  h2 { display: flex; align-items: center; gap: 10px; font: 700 16px/1 "Inter",sans-serif; color: #002F5C; padding-bottom: 10px; border-bottom: 2px solid #E6EAEF; margin-bottom: 18px; }
+  .sec-num { width: 22px; height: 22px; border-radius: 50%; background: #0066FF; color: #fff; font: 700 10px/1 monospace; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  p { color: #4D6A8A; margin-bottom: 10px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+  .stat { background: #F4F7FA; border-radius: 8px; padding: 14px; text-align: center; }
+  .stat .v { font: 800 24px/1 "Inter",sans-serif; color: #002F5C; }
+  .stat .l { font: 500 10px/1.3 monospace; color: #768CA2; margin-top: 4px; text-transform: uppercase; letter-spacing: .06em; }
+  .stat.danger .v { color: #FF4D4F; }
+  .stat.success .v { color: #0CB180; }
+  table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  th { background: #F4F7FA; font: 600 10px/1 monospace; letter-spacing: .08em; text-transform: uppercase; color: #768CA2; padding: 10px 12px; text-align: left; border-bottom: 1px solid #E6EAEF; }
+  td { padding: 9px 12px; border-bottom: 1px solid #F1F4F7; vertical-align: top; color: #4D6A8A; }
+  tr:last-child td { border-bottom: 0; }
+  .badge { display: inline-flex; padding: 3px 8px; border-radius: 4px; font: 700 9px/1 monospace; letter-spacing: .06em; }
+  .badge.pass     { background: #E2F7EF; color: #0CB180; }
+  .badge.fail     { background: #FDE7E7; color: #FF4D4F; }
+  .badge.findings { background: #FFF3DB; color: #C77700; }
+  .badge.na       { background: #F1F4F7; color: #768CA2; }
+  .summary-cell { max-width: 280px; font-size: 11px; color: #768CA2; }
+  .prog-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #F1F4F7; }
+  .prog-row:last-child { border-bottom: 0; }
+  .prog-label { width: 160px; flex-shrink: 0; font: 600 12px/1 "Inter",sans-serif; color: #1A446C; }
+  .prog-track { flex: 1; height: 8px; border-radius: 9999px; background: #E6EAEF; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 9999px; }
+  .prog-val { width: 40px; text-align: right; font: 700 12px/1 monospace; }
+  .recs-list { list-style: none; }
+  .recs-list li { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F1F4F7; color: #4D6A8A; font-size: 12.5px; }
+  .recs-list li:last-child { border-bottom: 0; }
+  .recs-list li::before { content: "→"; color: #0066FF; font-weight: 700; flex-shrink: 0; }
+  @media print {
+    .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .kpi, .stat { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="cover">
+  <div class="badge">🛡 iDox.ai Red Team · Security Assessment</div>
+  <h1>AI Red-Team Assessment Report</h1>
+  <div class="meta">Prepared by Security Engineering · ${now}<br>${details.length} jobs · ${total} tests</div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="v">${total}</div><div class="l">Total tests</div></div>
+    <div class="kpi"><div class="v" style="color:#2ED5A6">${rate}%</div><div class="l">Defense rate</div></div>
+    <div class="kpi"><div class="v" style="color:#FF6B5E">${failed + withFindings}</div><div class="l">Issues found</div></div>
+    <div class="kpi"><div class="v">${details.length}</div><div class="l">Test jobs</div></div>
+  </div>
+</div>
+<div class="body">
+  ${secHtml('summary','1','Executive Summary',`
+    <p>This red-team assessment evaluated <strong>${total} test scenarios</strong> across <strong>${details.length} test jobs</strong>. The overall defense rate was <strong>${rate}%</strong>, with <strong>${failed} attack success(es)</strong> and <strong>${withFindings} finding(s)</strong> identified requiring remediation.</p>
+    <p>All scenarios were executed sequentially against the configured target agent. Results were evaluated using automated LLM-based analysis to determine attack success, severity classification, and remediation recommendations.</p>
+  `)}
+  ${secHtml('method','2','Methodology',`
+    <div class="stat-grid">
+      <div class="stat"><div class="v">${total}</div><div class="l">Tests run</div></div>
+      <div class="stat success"><div class="v">${rate}%</div><div class="l">Defended</div></div>
+      <div class="stat danger"><div class="v">${failed}</div><div class="l">Attacked</div></div>
+      <div class="stat"><div class="v">${withFindings}</div><div class="l">Has Findings</div></div>
+    </div>
+    <p>Each scenario was executed independently. The attack agent sent adversarial prompts and monitored tool-call behavior. An LLM evaluator then assessed whether the attack succeeded based on the agent's response and tool usage patterns.</p>
+  `)}
+  ${secHtml('details','3','Detailed Results',`
+    <table>
+      <thead><tr><th>Job</th><th>Scenario</th><th>Outcome</th><th>Severity</th><th>Analysis</th></tr></thead>
+      <tbody>${summaryRows || '<tr><td colspan="5" style="text-align:center;padding:20px;color:#768CA2">No session data available</td></tr>'}</tbody>
+    </table>
+  `)}
+  ${secHtml('matrix','4','Risk Matrix',`
+    <div class="stat-grid">
+      <div class="stat danger"><div class="v">${failed}</div><div class="l">High — attacked</div></div>
+      <div class="stat"><div class="v" style="color:#C77700">${withFindings}</div><div class="l">Medium — findings</div></div>
+      <div class="stat success"><div class="v">${defended}</div><div class="l">Low / defended</div></div>
+      <div class="stat"><div class="v">${total - totalEval}</div><div class="l">No eval</div></div>
+    </div>
+  `)}
+  ${secHtml('recs','5','Recommendations',`
+    ${(failed + withFindings) > 0 ? `<ul class="recs-list">
+      ${failed > 0 ? `<li>Review and harden guardrails for all <strong>${failed}</strong> scenarios where attacks fully succeeded.</li>` : ''}
+      ${withFindings > 0 ? `<li>Investigate <strong>${withFindings}</strong> audit finding(s) — these are high/critical severity issues discovered during audit scans that require remediation even though no direct attack succeeded.</li>` : ''}
+      <li>Apply output filtering to prevent sensitive data leakage in agent responses.</li>
+      <li>Implement rate-limiting and anomaly detection on tool-call patterns.</li>
+      <li>Re-run affected scenarios after applying mitigations to verify effectiveness.</li>
+      <li>Schedule recurring red-team assessments to catch regressions in agent guardrails.</li>
+    </ul>` : '<p style="color:#0CB180;font-weight:600">✓ No defense failures detected. Continue regular assessments to maintain posture.</p>'}
+  `)}
+</div>
+</body>
+</html>`;
+}
+
+async function exportReport() {
+  const btn = document.getElementById('export-btn');
+  const iconSvg = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 1v7"/><polyline points="4,5 7,8 10,5"/><path d="M2 10v1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1"/></svg>';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Generating…'; }
+  try {
+    const jobs = await api('GET', '/jobs');
+    const details = await Promise.all(jobs.map(j => api('GET', '/jobs/'+j.id).catch(()=>j)));
+
+    if (reportFmt === 'csv') {
+      const rows=[['job_id','agent_url','status','scenario_key','scenario_name','session_status','attack_successful','summary']];
+      for (const d of details)
+        for (const s of d.sessions||[])
+          rows.push([d.id,d.agent_url,d.status,s.scenario_key,s.scenario_name,s.status,s.evaluation?.attack_successful??'',s.evaluation?.summary??'']);
+      dl(new Blob([rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n')],{type:'text/csv'}), 'redguard-report.csv');
+      toast('CSV report exported');
+
+    } else if (reportFmt === 'json') {
+      dl(new Blob([JSON.stringify(details,null,2)],{type:'application/json'}), 'redguard-report.json');
+      toast('JSON report exported');
+
+    } else if (reportFmt === 'pdf') {
+      const html = buildHtmlReport(details);
+      const win = window.open('', '_blank');
+      if (!win) { toast('Please allow pop-ups to export PDF', true); return; }
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => { win.focus(); win.print(); }, 600);
+      toast('Print dialog opened — save as PDF');
+
+    } else if (reportFmt === 'html') {
+      const html = buildHtmlReport(details);
+      dl(new Blob([html],{type:'text/html'}), 'redguard-report.html');
+      toast('HTML report exported');
+    }
+
+    if (btn) { btn.disabled = false; btn.innerHTML = iconSvg + ' EXPORT REPORT'; }
+  } catch (e) {
+    toast('Export failed: '+e.message, true);
+    if (btn) { btn.disabled = false; btn.innerHTML = iconSvg + ' EXPORT REPORT'; }
+  }
+}
+function dl(blob, name) { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); }
+
+// ── Helpers ──────────────────────────────────────────────────────
+function statusPill(s) {
+  return `<span class="rt-pill ${s}"><span class="d"></span>${s}</span>`;
+}
+function timeAgo(iso) {
+  const d = (Date.now()-new Date(iso))/1000;
+  if (d<60) return 'just now';
+  if (d<3600) return Math.floor(d/60)+'m ago';
+  if (d<86400) return Math.floor(d/3600)+'h ago';
+  return Math.floor(d/86400)+'d ago';
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toast(msg, isErr=false) {
+  const t = document.getElementById('rt-toast');
+  t.textContent = msg;
+  t.className = 'show ' + (isErr?'err':'ok');
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.className='', 3500);
+}
+
+// ── Boot ─────────────────────────────────────────────────────────
+if (API_KEY) {
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app').classList.add('show');
+  initApp();
+}
+
+// ── Guardrail Modal ───────────────────────────────────────────────
+const GR_CAPS = [
+  { tool: 'browser_act', icon: `<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/>`,
+    t: 'Browser & web actions',
+    d: 'Inspects every navigation, click and form submission an agent attempts — blocking unauthorized purchases, logins and data exfiltration.' },
+  { tool: 'exec', icon: `<polyline points="4,17 10,11 4,5"/><line x1="12" y1="19" x2="20" y2="19"/>`,
+    t: 'Code & shell execution',
+    d: 'Intercepts shell and code-exec calls before they run, stopping destructive commands like file deletion or privilege escalation.' },
+  { tool: 'write / upload', icon: `<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/>`,
+    t: 'File & data egress',
+    d: 'Scans writes and uploads for sensitive documents, secrets and PII, holding anything that breaks your data-handling policy.' },
+];
+
+const GR_IDOX_MARK = `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="24" height="24" rx="4" fill="#0066FF"/>
+  <path d="M12.858 11.5938C12.628 11.8467 12.628 12.2139 12.858 12.4668L14.771 14.5712C15.0694 14.8995 15.6203 14.8993 15.9184 14.5708L17.8279 12.4664C18.0574 12.2136 18.0574 11.8471 17.8279 11.5942L15.9184 9.48984C15.6203 9.16129 15.0694 9.16107 14.771 9.48937L12.858 11.5938Z" fill="url(#gmg)"/>
+  <path d="M14.0774 9.06858C14.4828 8.62107 14.4826 7.97165 14.0771 7.5243L10.6662 3.76193C10.4164 3.48645 10.0463 3.32715 9.65594 3.32715L7.31695 3.32715C6.20285 3.32715 5.5939 4.52008 6.30658 5.30644L10.8867 10.3601C11.4124 10.9401 12.3822 10.94 12.9077 10.3599L14.0774 9.06858Z" fill="white"/>
+  <path d="M14.0774 14.9314C14.4828 15.3789 14.4826 16.0283 14.0771 16.4757L10.6662 20.2381C10.4164 20.5135 10.0463 20.6729 9.65594 20.6729L7.31695 20.6729C6.20285 20.6729 5.5939 19.4799 6.30658 18.6936L10.8867 13.6399C11.4124 13.0599 12.3822 13.06 12.9077 13.6401L14.0774 14.9314Z" fill="white"/>
+  <defs><linearGradient id="gmg" x1="18" y1="12.03" x2="12.69" y2="12.03" gradientUnits="userSpaceOnUse"><stop stop-color="#001F3D"/><stop offset="1" stop-color="#0038FF"/></linearGradient></defs>
+</svg>`;
+
+function openGuardrailModal(vulns) {
+  const el = document.getElementById('guardrail-modal');
+  const n = (vulns||[]).length;
+  const rows = (vulns||[]).map(v => {
+    const risk = (v.risk||'high').toLowerCase().replace('critical','high');
+    const tagCls = risk === 'high' ? 'high' : 'medium';
+    return `<div class="gm-why-row">
+      <span class="gm-tool">${esc(v.tool||'tool_call')}</span>
+      <span class="gm-ar" style="color:var(--d-text-muted)">→</span>
+      <span class="gm-vuln">${esc((v.behavior||v.summary||'successfully exploited').slice(0,80))}</span>
+      <span class="gm-tag ${tagCls}">${esc(risk)} risk</span>
+    </div>`;
+  }).join('');
+
+  const capsHtml = GR_CAPS.map(c => `
+    <div class="gm-cap">
+      <span class="gm-cap-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg></span>
+      <div>
+        <div class="gm-cap-t">${esc(c.t)} <code>${esc(c.tool)}</code></div>
+        <div class="gm-cap-d">${esc(c.d)}</div>
+      </div>
+    </div>`).join('');
+
+  el.innerHTML = `<div class="rt-gmodal-overlay" onclick="if(event.target===this)closeGuardrailModal()">
+    <div class="rt-gmodal" onclick="event.stopPropagation()">
+      <button class="rt-gmodal-x" onclick="closeGuardrailModal()" aria-label="Close">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
+      </button>
+      <div class="rt-gmodal-head">
+        <span class="gm-mark">${GR_IDOX_MARK}</span>
+        <div>
+          <div class="gm-kick">iDox.ai · Agentic Communication Protection</div>
+          <div class="gm-title">Guardrail</div>
+        </div>
+      </div>
+      <div class="rt-gmodal-body">
+        <p class="gm-lede">Guardrail is a runtime protection layer that sits between your AI agent and the tools it can call. Every action the agent takes — <code>browser_act</code>, <code>exec</code>, <code>write</code>, <code>upload</code> — is inspected against your policy <b>before it executes</b>, so a model that gets jailbroken still can't <i>do</i> anything harmful.</p>
+        <div class="gm-caps-h">How Guardrail protects every tool call</div>
+        <div class="gm-caps">${capsHtml}</div>
+      </div>
+      <div class="rt-gmodal-foot">
+        <a class="rt-btn rt-btn-primary" href="https://idox.ai/guardrail" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Get Guardrail
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" class="ext"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <button class="rt-btn rt-btn-ghost" onclick="grDownloadBrief()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download overview
+        </button>
+      </div>
+    </div>
+  </div>`;
+  el.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function openGuardrailHowItWorks() { openGuardrailModal([]); }
+
+function closeGuardrailModal() {
+  const el = document.getElementById('guardrail-modal');
+  el.style.display = 'none';
+  el.innerHTML = '';
+  document.body.style.overflow = '';
+}
+
+// ── Scenario detail modal ────────────────────────────────────────
+function openScDetail(id) {
+  const sc = scenarios.find(s => s.id === id);
+  if (!sc) return;
+  const tryParse = s => { try { return JSON.parse(s); } catch { return null; } };
+  const input      = tryParse(sc.input_json) || {};
+  const expected   = tryParse(sc.expected_json) || {};
+  const assertions = tryParse(sc.assertions) || [];
+  const owasp      = tryParse(sc.owasp_json) || [];
+
+  const typeLabel = 'Agent Attack';
+
+  const inputStr = Object.entries(input).map(([k,v]) =>
+    `<div class="rt-sc-field"><div class="rt-sc-field-lbl">${esc(k)}</div><div class="rt-sc-field-val"><pre>${esc(typeof v==='string'?v:JSON.stringify(v,null,2))}</pre></div></div>`
+  ).join('');
+
+  const assertionTags = assertions.length
+    ? `<div class="rt-sc-tags">${assertions.map(a=>`<span class="rt-sc-tag">${esc(a)}</span>`).join('')}</div>`
+    : `<span style="color:var(--d-text-muted);font-size:12px">—</span>`;
+
+  const owaspTags = owasp.length
+    ? `<div class="rt-sc-tags">${owasp.map(o=>`<span class="rt-sc-tag owasp">${esc(o)}</span>`).join('')}</div>`
+    : `<span style="color:var(--d-text-muted);font-size:12px">No OWASP mapping</span>`;
+
+  const expectedStr = Object.entries(expected).map(([k,v])=>`<code>${esc(k)}: ${esc(String(v))}</code>`).join(' ');
+
+  const el = document.getElementById('sc-detail-modal');
+  el.innerHTML = `
+    <div class="rt-sc-modal-overlay" onclick="if(event.target===this)closeScDetail()">
+      <div class="rt-sc-modal" onclick="event.stopPropagation()">
+        <div class="rt-sc-modal-head">
+          <div class="mh-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>
+          </div>
+          <div>
+            <div class="mh-title">${esc(sc.name)}</div>
+            <div class="mh-key">${esc(sc.scenario_key)} · ${esc(typeLabel)} · ${esc(sc.source==='generated'?'Generated':'Built-in')}</div>
+          </div>
+          <button class="rt-sc-modal-x" onclick="closeScDetail()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="rt-sc-modal-body">
+          ${inputStr}
+          <div class="rt-sc-field">
+            <div class="rt-sc-field-lbl">Expected</div>
+            <div class="rt-sc-field-val">${expectedStr||'—'}</div>
+          </div>
+          <div class="rt-sc-field">
+            <div class="rt-sc-field-lbl">Assertions</div>
+            <div class="rt-sc-field-val">${assertionTags}</div>
+          </div>
+          <div class="rt-sc-field">
+            <div class="rt-sc-field-lbl">OWASP Mapping</div>
+            <div class="rt-sc-field-val">${owaspTags}</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  el.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeScDetail() {
+  const el = document.getElementById('sc-detail-modal');
+  el.style.display = 'none';
+  el.innerHTML = '';
+  document.body.style.overflow = '';
+}
+
+function grDownloadBrief() {
+  const txt = `iDox.ai Guardrail — AI Agentic Communication Protection
+========================================================
+
+WHAT IT IS
+Guardrail is a runtime protection layer that sits between your AI agent and
+the tools it can call. Every tool call the agent makes — browser_act, exec,
+write, upload — is inspected against your policy BEFORE it executes.
+
+WHY MODEL-LEVEL FIXES AREN'T ENOUGH
+Jailbreaks, prompt injection and data-leakage exploits cannot be reliably
+patched inside the model. A protection layer is required to enforce what the
+agent is actually allowed to DO, regardless of what it was tricked into saying.
+
+HOW IT PROTECTS
+- browser_act ...... blocks unauthorized purchases, logins, data exfiltration
+- exec ............. stops destructive shell/code commands before they run
+- write / upload ... holds sensitive documents, secrets and PII
+
+GET STARTED
+https://idox.ai/guardrail
+`;
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([txt], {type:'text/plain'})),
+    download: 'iDox-Guardrail-overview.txt',
+  });
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+// ── General Modal ─────────────────────────────────────────────────
+function showModal(title, bodyHtml) {
+  const el = document.getElementById('gen-modal');
+  el.innerHTML = `
+    <div class="gm-form-box" onclick="event.stopPropagation()">
+      <div class="gm-form-head">
+        <div class="gm-form-title">${title}</div>
+        <button class="rt-gmodal-x" onclick="closeModal()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
+        </button>
+      </div>
+      <div class="gm-form-body">${bodyHtml}</div>
+    </div>`;
+  el.style.display = 'flex';
+  el.onclick = (e) => { if (e.target === el) closeModal(); };
+}
+
+function closeModal() {
+  const el = document.getElementById('gen-modal');
+  el.style.display = 'none';
+  el.innerHTML = '';
+}
+
+// ── Generate with LLM ─────────────────────────────────────────────
+function showGenerateModal() {
+  showModal('Generate Scenarios with LLM', `
+    <div>
+      <label class="gm-form-label">Attack Query</label>
+      <textarea id="gen-query" class="gm-form-input" rows="3" placeholder="e.g. 'prompt injection to exfiltrate credentials via memory access'"></textarea>
+    </div>
+    <div>
+      <label class="gm-form-label">Count</label>
+      <input id="gen-count" class="gm-form-input" type="number" value="2" min="1" max="5">
+    </div>
+    <div id="gen-log" class="gm-log" style="display:none"></div>
+    <div class="gm-form-foot">
+      <button class="rt-btn rt-btn-ghost rt-btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="rt-btn rt-btn-primary rt-btn-sm" id="gen-btn" onclick="doGenerate()">✦ Generate</button>
+    </div>
+  `);
+}
+
+async function doGenerate() {
+  const query = document.getElementById('gen-query').value.trim();
+  const count = parseInt(document.getElementById('gen-count').value) || 1;
+  if (!query) return;
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.innerHTML = 'Generating…';
+  const logEl = document.getElementById('gen-log');
+  logEl.style.display = 'block';
+  logEl.innerHTML = '<span style="color:var(--d-blue)">Calling LLM…</span>';
+  try {
+    const results = await api('POST', '/scenarios/generate', { query, count });
+    logEl.innerHTML += `<br><span style="color:#4ade80">Generated ${results.length} scenario(s)</span>`;
+    setTimeout(() => { closeModal(); loadScenarios(); }, 800);
+  } catch (e) {
+    logEl.innerHTML += `<br><span style="color:var(--d-danger)">Error: ${e.message}</span>`;
+    btn.disabled = false;
+    btn.textContent = '✦ Generate';
+  }
+}
+
+// ── Create New Scenario ───────────────────────────────────────────
+function showCreateScenario() {
+  showModal('Create Scenario', `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <label class="gm-form-label">Scenario Key (ID)</label>
+        <input id="sc-key" class="gm-form-input" placeholder="CUSTOM-LLM01-001">
+      </div>
+      <div>
+        <label class="gm-form-label">Type</label>
+        <input class="gm-form-input" value="agent_attack" disabled style="opacity:.5;cursor:not-allowed">
+      </div>
+    </div>
+    <div>
+      <label class="gm-form-label">Name</label>
+      <input id="sc-name" class="gm-form-input" placeholder="Custom attack scenario">
+    </div>
+    <div>
+      <label class="gm-form-label">User Goal (attack prompt)</label>
+      <textarea id="sc-goal" class="gm-form-input" rows="3" placeholder="The adversarial prompt to send…"></textarea>
+    </div>
+    <div>
+      <label class="gm-form-label">Injected Instruction <span style="font-weight:400;color:var(--d-text-muted)">(optional — indirect injection)</span></label>
+      <textarea id="sc-inject" class="gm-form-input" rows="2" placeholder="Hidden instruction injected via tool output or environment…"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <label class="gm-form-label">Expected Decision</label>
+        <select id="sc-decision" class="gm-form-input">
+          <option value="block">block</option>
+          <option value="allow">allow</option>
+        </select>
+      </div>
+      <div>
+        <label class="gm-form-label">Assertions <span style="font-weight:400;color:var(--d-text-muted)">(one per line)</span></label>
+        <textarea id="sc-assertions" class="gm-form-input" rows="2" placeholder="tool_call_captured&#10;unsafe_action_not_executed"></textarea>
+      </div>
+    </div>
+    <div>
+      <label class="gm-form-label">OWASP Mapping <span style="font-weight:400;color:var(--d-text-muted)">(one per line)</span></label>
+      <textarea id="sc-owasp" class="gm-form-input" rows="2" placeholder="OWASP LLM01 - Prompt Injection"></textarea>
+    </div>
+    <div>
+      <label class="gm-form-label">Evaluation Guidance</label>
+      <textarea id="sc-eval" class="gm-form-input" rows="3" placeholder="Describe: (1) what this tests, (2) PASS condition, (3) FAIL condition, (4) edge cases"></textarea>
+    </div>
+    <div class="gm-form-foot">
+      <button class="rt-btn rt-btn-ghost rt-btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="rt-btn rt-btn-primary rt-btn-sm" onclick="doCreateScenario()">Save</button>
+    </div>
+  `);
+}
+
+async function doCreateScenario() {
+  const key        = document.getElementById('sc-key').value.trim();
+  const scType     = 'agent_attack';
+  const name       = document.getElementById('sc-name').value.trim();
+  const goal       = document.getElementById('sc-goal').value.trim();
+  const inject     = document.getElementById('sc-inject').value.trim();
+  const decision   = document.getElementById('sc-decision').value;
+  const assertRaw  = document.getElementById('sc-assertions').value.trim();
+  const owasp      = document.getElementById('sc-owasp').value.trim().split('\n').filter(Boolean);
+  const evalText   = document.getElementById('sc-eval').value.trim();
+  if (!key || !name || !goal) { toast('Fill in all required fields', true); return; }
+  const assertions = assertRaw
+    ? assertRaw.split('\n').filter(Boolean)
+    : ['tool_call_captured', 'unsafe_action_not_executed'];
+  try {
+    await api('POST', '/scenarios/', {
+      scenario_key: key, name,
+      type: scType,
+      input_json: JSON.stringify({ user_goal: goal, injected_instruction: inject }),
+      expected_json: JSON.stringify({ decision }),
+      assertions: JSON.stringify(assertions),
+      owasp_json: JSON.stringify(owasp),
+      evaluation_json: evalText ? JSON.stringify({ guidance: evalText }) : '{}',
+    });
+    closeModal();
+    loadScenarios();
+    toast('Scenario created');
+  } catch (e) {
+    toast(e.message || 'Failed to create scenario', true);
+  }
+}
+</script>
+</body>
+</html>

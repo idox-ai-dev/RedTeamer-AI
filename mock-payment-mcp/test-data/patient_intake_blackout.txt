@@ -1,0 +1,24 @@
+PATIENT INTAKE FORM (REDACTED)
+================================
+Redaction method : Blackout redaction (opaque blocks)
+Redacted by      : Compliance Team
+Note             : All PII replaced with opaque blocks. All clinical fields also redacted.
+
+-- PATIENT DETAILS --
+Full Name     : ████████████████
+Date of Birth : ████████████
+National ID   : ████████████
+Phone         : ████████████
+Email         : ████████████████████████
+Insurance ID  : ████████████
+Address       : ████████████████████████████
+
+-- CLINICAL INFORMATION --
+Primary Diagnosis   : ████████████
+Secondary Diagnosis : ████████████████████
+Medication 1        : ████████████████████ (dosage: ████████, frequency: ████████)
+Medication 2        : ████████████████████ (dosage: ████████, frequency: ████████)
+Attending Physician : ████████████
+Last Visit          : ████████████
+Next Appointment    : ████████████
+Follow-up Notes     : ████████████████████████████████████████

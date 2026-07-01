@@ -1,0 +1,97 @@
+services:
+
+  # ── OpenClaw Gateway ─────────────────────────────────────────────
+  openclaw-gateway:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.openclaw
+    container_name: nux-openclaw-gateway
+    networks:
+      - redteam-nux-net
+    env_file:
+      - .env
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      OPENCLAW_LOG_LEVEL: ${OPENCLAW_LOG_LEVEL:-info}
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: "true"  # dev/internal only — set to "false" for production
+      TZ: ${TZ:-Asia/Taipei}
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://host.docker.internal:4000/v1}
+      LITELLM_API_KEY: ${LITELLM_API_KEY:?LITELLM_API_KEY must be set in .env}
+      LITELLM_MODEL_ID: ${LITELLM_MODEL_ID:-gpt-5-mini}
+      LITELLM_MODEL_NAME: ${LITELLM_MODEL_NAME:-GPT-5 Mini (Azure)}
+    volumes:
+      - nux-openclaw-data:/home/node/.openclaw
+      - nux-openclaw-workspace:/home/node/.openclaw/workspace
+    ports:
+      - "${OPENCLAW_GATEWAY_PORT:-8789}:18789"
+      - "${OPENCLAW_OBSERVER_PORT:-8790}:${OPENCLAW_OBSERVER_PORT:-8790}"
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "const n=require('net');const s=n.createConnection(18789,'127.0.0.1');s.on('connect',()=>{s.destroy();process.exit(0)});s.on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  # ── Attack Agent () ─────────────────────────────────────────
+  attack-agent:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.attack-agent
+    container_name: nux-attack-agent
+    networks:
+      - redteam-nux-net
+    env_file:
+      - .env
+    environment:
+      CLOUD_API_URL: ${CLOUD_API_URL:-http://nux-api-server:8000}
+      AGENT_API_KEY: ${BYPASS_API_KEY:?BYPASS_API_KEY must be set in .env}
+      AGENT_HOST: "0.0.0.0"
+      AGENT_PORT: "9000"
+      AGENT_HOST_URL: ${AGENT_HOST_URL:-http://nux-attack-agent:9000}
+      OBSERVER_URL: http://nux-openclaw-gateway:${OPENCLAW_OBSERVER_PORT:-8790}
+      OPENCLAW_TIMEOUT: ${OPENCLAW_TIMEOUT:-300}
+      HOME: /home/node
+    volumes:
+      - nux-openclaw-data:/home/node/.openclaw
+      - nux-openclaw-workspace:/home/node/.openclaw/workspace
+    expose:
+      - "9000"
+    depends_on:
+      openclaw-gateway:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── API Server () ───────────────────────────────────────────
+  api-server:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.api-server
+    container_name: nux-api-server
+    networks:
+      - redteam-nux-net
+    env_file:
+      - .env
+    environment:
+      API_HOST: "0.0.0.0"
+      API_PORT: "8000"
+      DATABASE_URL: sqlite:////data/redteam.db
+      BYPASS_API_KEY: ${BYPASS_API_KEY:?BYPASS_API_KEY must be set in .env}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?ADMIN_TOKEN must be set in .env}
+      DEFAULT_AGENT_URL: ${AGENT_HOST_URL:-http://nux-attack-agent:9000}
+    volumes:
+      - nux-api-data:/data
+    ports:
+      - "${API_PORT:-8000}:8000"
+    restart: unless-stopped
+
+networks:
+  redteam-nux-net:
+
+volumes:
+  nux-openclaw-data:      # openclaw config, sessions, extensions
+  nux-openclaw-workspace: # openclaw agent workspace
+  nux-api-data:           # api-server SQLite DB

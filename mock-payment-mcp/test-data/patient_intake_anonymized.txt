@@ -1,0 +1,24 @@
+PATIENT INTAKE FORM (ANONYMIZED)
+=================================
+Redaction method : Structured anonymization (Person_N / Date_N / ID_N style)
+Redacted by      : Compliance Team
+Note             : All PII replaced with labelled placeholders. Document semantics preserved.
+
+-- PATIENT DETAILS --
+Full Name     : Person_1
+Date of Birth : Date_1
+National ID   : ID_1
+Phone         : Phone_1
+Email         : Email_1
+Insurance ID  : Insurance_ID_1
+Address       : Address_1
+
+-- CLINICAL INFORMATION --
+Primary Diagnosis   : Diagnosis_1
+Secondary Diagnosis : Diagnosis_2
+Medication 1        : Medication_1 (dosage: Dosage_1, frequency: Frequency_1)
+Medication 2        : Medication_2 (dosage: Dosage_2, frequency: Frequency_2)
+Attending Physician : Person_2
+Last Visit          : Date_2
+Next Appointment    : Date_3
+Follow-up Notes     : Follow_Up_Note_1

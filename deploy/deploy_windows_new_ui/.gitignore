@@ -1,0 +1,4 @@
+venv-api-server/
+venv-attack-agent/
+.env
+.pids.json

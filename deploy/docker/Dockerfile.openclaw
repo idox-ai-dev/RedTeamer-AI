@@ -1,0 +1,36 @@
+FROM ghcr.io/openclaw/openclaw:2026.6.8
+
+USER root
+
+# openclaw's plugin security check expects uid=1000; fix node user uid if needed
+RUN CURRENT_UID=$(id -u node 2>/dev/null || echo ""); \
+    if [ "$CURRENT_UID" != "1000" ] && [ -n "$CURRENT_UID" ]; then \
+      usermod -u 1000 node && groupmod -g 1000 node 2>/dev/null || true; \
+      find /home/node -xdev -uid "$CURRENT_UID" -exec chown -h 1000:1000 {} \; 2>/dev/null || true; \
+    fi
+
+# Python for mock-payment-mcp subprocess
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends python3 python3-venv python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+
+# Bundle observer-plugin into image (entrypoint syncs to config volume on boot)
+# dist/index.js is pre-built locally via: esbuild index.ts --bundle --platform=node --format=esm --outfile=dist/index.js
+COPY observer-plugin /opt/redteam-extensions/redteam-observer
+RUN cd /opt/redteam-extensions/redteam-observer && npm install --omit=dev --silent && \
+    test -f dist/index.js || (npx --yes esbuild index.ts --bundle --platform=node --format=esm --outfile=dist/index.js)
+
+# Bundle mock-payment-mcp with pinned mcp==1.9.4 (protocol 2025-03-26, compatible with openclaw)
+COPY mock-payment-mcp /opt/mock-payment-mcp
+RUN python3 -m venv /opt/mcp-venv && \
+    /opt/mcp-venv/bin/pip install --quiet --no-cache-dir mcp==1.9.4
+
+RUN chown -R node:node /opt/redteam-extensions /opt/mock-payment-mcp /opt/mcp-venv
+
+COPY deploy/docker/entrypoint-openclaw.sh /usr/local/bin/entrypoint-openclaw.sh
+RUN chmod +x /usr/local/bin/entrypoint-openclaw.sh
+
+USER node
+
+ENTRYPOINT ["/usr/local/bin/entrypoint-openclaw.sh"]
+CMD ["node", "dist/index.js", "gateway", "--bind", "lan", "--port", "18789"]
