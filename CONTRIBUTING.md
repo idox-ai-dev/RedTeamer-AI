@@ -1,6 +1,6 @@
-# Contributing to iDox.ai Red Team™
+# Contributing to RedTeamer AI
 
-Thank you for your interest in contributing. **iDox.ai Red Team™** is an autonomous agentic AI red teaming platform; contributions that improve scenario coverage, evaluation quality, observer fidelity, or deployment docs are especially welcome.
+Thank you for your interest in contributing. **RedTeamer AI** is an autonomous agentic AI red teaming platform; contributions that improve scenario coverage, evaluation quality, observer fidelity, or deployment docs are especially welcome.
 
 ---
 
