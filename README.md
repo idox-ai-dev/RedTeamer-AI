@@ -1,4 +1,4 @@
-# iDox.ai Red Team™
+# RedTeamer AI
 
 **Autonomous agentic AI red teaming** — orchestrates structured attacks against a live AI agent, captures every tool call, and runs LLM-backed evaluation to produce evidence-backed PASS/FAIL reports. Coverage aligns with OWASP LLM Top 10, OWASP Top 10 for Agentic AI, MITRE ATLAS, and related adversarial AI frameworks.
 
@@ -14,9 +14,9 @@
 
 ## Overview
 
-iDox.ai Red Team™ runs **test jobs** that dispatch attack scenarios to your agent endpoint without manual per-step driving. The attack agent invokes the OpenClaw CLI, the observer plugin records the full tool chain, and the cloud API stores events and runs rule or LLM evaluation. You can also **generate and refine scenarios with an LLM** when defenses hold and you want a harder follow-up probe.
+RedTeamer AI runs **test jobs** that dispatch attack scenarios to your agent endpoint without manual per-step driving. The attack agent invokes the OpenClaw CLI, the observer plugin records the full tool chain, and the cloud API stores events and runs rule or LLM evaluation. You can also **generate and refine scenarios with an LLM** when defenses hold and you want a harder follow-up probe.
 
-![iDox.ai Red Team™ — Results Analysis](docs/ui-preview.png)
+![RedTeamer AI — Results Analysis](docs/ui-preview.png)
 
 **What it tests:**
 - Prompt injection and indirect injection (OWASP LLM01 · ATLAS AML.T0051)

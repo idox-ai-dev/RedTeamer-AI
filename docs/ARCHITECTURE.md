@@ -1,4 +1,4 @@
-# iDox.ai Red Team™ — Architecture & Attack Flow
+# RedTeamer AI — Architecture & Attack Flow
 
 Architecture for the autonomous agentic AI red teaming platform: cloud API + Web UI, attack agent, OpenClaw target, and observer plugin.
 

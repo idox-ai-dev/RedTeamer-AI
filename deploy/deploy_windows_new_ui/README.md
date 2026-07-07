@@ -1,6 +1,6 @@
-# iDox.ai Red Team™ — Windows Deployment Guide
+# RedTeamer AI — Windows Deployment Guide
 
-This directory contains PowerShell scripts to deploy **iDox.ai Red Team™** on Windows for local autonomous agent red teaming, including:
+This directory contains PowerShell scripts to deploy **RedTeamer AI** on Windows for local autonomous agent red teaming, including:
 
 - **api-server** — backend API (FastAPI, default port 8000)
 - **attack-agent** — attack agent service (FastAPI, default port 9000)

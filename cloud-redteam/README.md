@@ -1,4 +1,4 @@
-# iDox.ai Red Team™ — Cloud Edition
+# RedTeamer AI — Cloud Edition
 
 Autonomous agentic AI red teaming for multi-tenant deployments. The cloud hosts the API server and Web UI; attacker hosts register as clients and run a lightweight **Attack Agent** that drives the local OpenClaw instance, captures observer events, and returns results without manual orchestration per scenario.
 
