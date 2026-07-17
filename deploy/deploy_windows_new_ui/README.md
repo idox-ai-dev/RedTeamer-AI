@@ -42,6 +42,7 @@ Open `.env` in a text editor and fill in the values below.
 | `DATABASE_URL` | SQLite database path | `sqlite:///./redteam.db` |
 | `BYPASS_API_KEY` | API key for Web UI login (must match `AGENT_API_KEY`) | `my-secret-key` |
 | `ADMIN_TOKEN` | Admin token for registering new clients | `my-admin-token` |
+| `DEFAULT_MAX_CONCURRENCY` | Max concurrent attacks per job (hard ceiling — request cannot exceed this value) | `3` |
 
 ### Azure OpenAI
 

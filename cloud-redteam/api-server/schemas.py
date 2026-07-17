@@ -63,6 +63,7 @@ class TestJobCreate(BaseModel):
     agent_url: str
     scenario_ids: List[str]
     openclaw_session_id: Optional[str] = None
+    max_concurrency: int = 3
 
 class SessionSummary(BaseModel):
     id: str
@@ -84,6 +85,7 @@ class TestJobOut(BaseModel):
     status: str
     scenario_count: int
     completed_count: int
+    max_concurrency: int = 3
     created_at: datetime
     completed_at: Optional[datetime]
     model_config = {"from_attributes": True}

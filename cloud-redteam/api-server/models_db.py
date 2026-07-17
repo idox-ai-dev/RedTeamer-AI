@@ -56,6 +56,7 @@ class TestJob(Base):
     status:          Mapped[str] = mapped_column(String, nullable=False, default="running")
     scenario_count:  Mapped[int] = mapped_column(nullable=False, default=0)
     completed_count: Mapped[int] = mapped_column(nullable=False, default=0)
+    max_concurrency: Mapped[int] = mapped_column(nullable=False, default=3)
     created_at:      Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     completed_at:    Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 

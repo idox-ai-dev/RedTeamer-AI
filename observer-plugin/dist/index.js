@@ -6,37 +6,43 @@ import { homedir } from "node:os";
 import { spawn } from "node:child_process";
 const EVENTS_DIR = join(homedir(), ".openclaw", "redteam-observer");
 const EVENTS_PATH = join(EVENTS_DIR, "events.jsonl");
-const RUN_ID_PATH = join(EVENTS_DIR, "current_run_id");
+const RUNS_DIR = join(EVENTS_DIR, "runs");
 const API_PORT = Number(process.env.OPENCLAW_OBSERVER_PORT ?? 18790);
 mkdirSync(EVENTS_DIR, { recursive: true });
-// Active run_id is stored in a file so both gateway and CLI processes share it
-function getActiveRunId() {
+mkdirSync(RUNS_DIR, { recursive: true });
+// Per-session run_id stored in individual files under runs/.
+// File-based IPC is required because the observer plugin loads in both the
+// gateway process (which handles /run/start) and each CLI subprocess
+// (which fires hooks). In-memory state is not shared across these processes.
+function runFile(ocSession) {
+    // Sanitise so the session key is safe as a filename
+    return join(RUNS_DIR, ocSession.replace(/[^a-zA-Z0-9_\-]/g, "_"));
+}
+function getRunId(ocSession) {
+    const f = runFile(ocSession);
     try {
-        if (!existsSync(RUN_ID_PATH))
+        if (!existsSync(f))
             return null;
-        const val = readFileSync(RUN_ID_PATH, "utf-8").trim();
-        return val || null;
+        return readFileSync(f, "utf-8").trim() || null;
     }
     catch {
         return null;
     }
 }
-function setActiveRunId(runId) {
+function setRunId(ocSession, runId) {
+    const f = runFile(ocSession);
     try {
-        if (runId) {
-            writeFileSync(RUN_ID_PATH, runId, "utf-8");
-        }
-        else {
-            if (existsSync(RUN_ID_PATH))
-                writeFileSync(RUN_ID_PATH, "", "utf-8");
-        }
+        writeFileSync(f, runId ?? "", "utf-8");
     }
     catch { }
 }
 function writeEvent(event) {
-    const activeRunId = getActiveRunId();
-    const enriched = activeRunId
-        ? { ...event, attack_run_id: event.attack_run_id ?? activeRunId }
+    let runId = null;
+    if (event.session_id) {
+        runId = getRunId(event.session_id);
+    }
+    const enriched = runId
+        ? { ...event, attack_run_id: event.attack_run_id ?? runId }
         : event;
     appendFileSync(EVENTS_PATH, JSON.stringify(enriched) + "\n", "utf-8");
 }
@@ -95,10 +101,12 @@ function startApi(port) {
             req.on("data", (chunk) => { body += chunk; });
             req.on("end", () => {
                 try {
-                    const { run_id } = JSON.parse(body);
-                    setActiveRunId(run_id ?? null);
+                    const { run_id, oc_session } = JSON.parse(body);
+                    if (run_id && oc_session) {
+                        setRunId(oc_session, run_id);
+                    }
                     res.writeHead(200, { "Content-Type": "application/json" });
-                    res.end(JSON.stringify({ ok: true, run_id }));
+                    res.end(JSON.stringify({ ok: true, run_id, oc_session }));
                 }
                 catch (e) {
                     res.writeHead(400, { "Content-Type": "application/json" });
@@ -108,9 +116,22 @@ function startApi(port) {
             return;
         }
         if (req.method === "POST" && url.pathname === "/run/end") {
-            setActiveRunId(null);
-            res.writeHead(200, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ ok: true }));
+            let body = "";
+            req.on("data", (chunk) => { body += chunk; });
+            req.on("end", () => {
+                try {
+                    const { oc_session } = JSON.parse(body || "{}");
+                    if (oc_session) {
+                        setRunId(oc_session, null);
+                    }
+                    res.writeHead(200, { "Content-Type": "application/json" });
+                    res.end(JSON.stringify({ ok: true }));
+                }
+                catch (e) {
+                    res.writeHead(400, { "Content-Type": "application/json" });
+                    res.end(JSON.stringify({ ok: false, error: String(e) }));
+                }
+            });
             return;
         }
         if (req.method === "POST" && url.pathname === "/events") {
