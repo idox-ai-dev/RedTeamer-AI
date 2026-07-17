@@ -32,7 +32,7 @@ Autonomous agentic AI red teaming for multi-tenant deployments. The cloud hosts 
 │              │ hooks (before/after_tool_call,        │
 │              │        llm_output)                    │
 │         Observer Plugin :18790                       │
-│              └─► tags events with attack_run_id      │
+│              └─► tags events per session (runs/ dir) │
 │              └─► POST /api/v1/events/batch → cloud   │
 └──────────────────────────────────────────────────────┘
 ```
@@ -68,7 +68,7 @@ cloud-redteam/
 ├── attack-agent/
 │   ├── main.py                 # FastAPI agent (runs on attacker host)
 │   ├── cli_adapter.py          # Subprocess wrapper for openclaw CLI
-│   └── event_forwarder.py      # start_run / collect / forward events to cloud
+│   └── event_forwarder.py      # start_run(run_id, oc_session) / collect by oc_session / forward events to cloud
 └── README.md
 
 observer-plugin/                # repo root — OpenClaw observer plugin (pre-built JS)
@@ -119,6 +119,9 @@ ADMIN_TOKEN=change-me-to-a-strong-secret
 DATABASE_URL=sqlite:///./redteam.db
 API_HOST=0.0.0.0
 API_PORT=8000
+
+# Max concurrent attacks per job (hard ceiling — request cannot exceed this value)
+DEFAULT_MAX_CONCURRENCY=3
 ```
 
 Start:
@@ -237,10 +240,11 @@ python main.py
 ## Running an Attack
 
 1. **Web UI → Attack** — select scenarios (or generate with LLM), set the agent URL, and start a **test job** (autonomous multi-scenario run)
-2. **OpenClaw Session ID** — optional; defaults to per-scenario isolation; use `main` to test against the agent's default memory
-3. **Wait** — the job runs asynchronously; the dashboard shows progress and per-scenario status
-4. **Evaluate** — run `rule` (fast) or `llm` (deep) evaluation on completed sessions
-5. **Report** — view the full evaluation: attack chain, evidence, OWASP mapping, recommendation
+2. **OpenClaw Session ID** — automatically set to the scenario key for each scenario to ensure session isolation in parallel runs
+3. **Max Concurrency** — controls how many scenarios run simultaneously (default 3, max 10); set via `max_concurrency` in the job payload
+4. **Wait** — the job runs asynchronously; the dashboard shows progress and per-scenario status
+5. **Evaluate** — run `rule` (fast) or `llm` (deep) evaluation on completed sessions
+6. **Report** — view the full evaluation: attack chain, evidence, OWASP mapping, recommendation
 
 ---
 
@@ -283,7 +287,8 @@ python main.py
 ```
 Observer :18790  ──(collect)──►  Attack Agent  ──(POST /events/batch)──►  Cloud DB
   events.jsonl                   event_forwarder                           events table
-  attack_run_id tagged            filters by attack_run_id                 tool_result stored
+  session_id tagged               filters client-side by oc_session        tool_result stored
+  (runs/{oc_session} per run)     via run_id correlation                    
 ```
 
 Each event stored in DB includes:

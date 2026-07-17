@@ -55,4 +55,8 @@ def _migrate_add_columns():
             if col not in scenarios_cols:
                 conn.execute(text(ddl))
 
+        test_jobs_cols = {row[1] for row in conn.execute(text("PRAGMA table_info(test_jobs)"))}
+        if "max_concurrency" not in test_jobs_cols:
+            conn.execute(text("ALTER TABLE test_jobs ADD COLUMN max_concurrency INTEGER NOT NULL DEFAULT 3"))
+
         conn.commit()

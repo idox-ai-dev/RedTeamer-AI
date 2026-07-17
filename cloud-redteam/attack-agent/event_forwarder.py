@@ -20,30 +20,27 @@ def clear_events() -> None:
         pass
 
 
-def start_run(run_id: str) -> None:
-    log.info("[event_forwarder] Starting run: %s → %s/run/start", run_id, OBSERVER_URL)
+def start_run(run_id: str, oc_session: str) -> None:
+    log.info("[event_forwarder] Starting run: %s (oc_session=%s) → %s/run/start", run_id, oc_session, OBSERVER_URL)
     try:
-        requests.post(f"{OBSERVER_URL}/run/start", json={"run_id": run_id}, timeout=5)
+        requests.post(f"{OBSERVER_URL}/run/start", json={"run_id": run_id, "oc_session": oc_session}, timeout=5)
         log.info("[event_forwarder] Run started: %s", run_id)
     except Exception as exc:
         log.error("[event_forwarder] start_run error: %s", exc)
 
 
-def end_run() -> None:
+def end_run(oc_session: str) -> None:
     try:
-        requests.post(f"{OBSERVER_URL}/run/end", timeout=5)
-        log.info("[event_forwarder] Run ended")
+        requests.post(f"{OBSERVER_URL}/run/end", json={"oc_session": oc_session}, timeout=5)
+        log.info("[event_forwarder] Run ended: oc_session=%s", oc_session)
     except Exception:
         pass
 
 
-def collect(since_iso: str, run_id: Optional[str] = None) -> List[Dict[str, Any]]:
-    log.info("[event_forwarder] Collecting events from %s since=%s run_id=%s", OBSERVER_URL, since_iso, run_id)
+def collect(since_iso: str, run_id: Optional[str] = None, oc_session: Optional[str] = None) -> List[Dict[str, Any]]:
+    log.info("[event_forwarder] Collecting events from %s since=%s oc_session=%s", OBSERVER_URL, since_iso, oc_session)
     try:
-        params = f"since={since_iso}"
-        if run_id:
-            params += f"&attack_run_id={run_id}"
-        r = requests.get(f"{OBSERVER_URL}/events?{params}", timeout=8)
+        r = requests.get(f"{OBSERVER_URL}/events?since={since_iso}", timeout=8)
         if not r.ok:
             log.warning("[event_forwarder] Collect returned HTTP %d", r.status_code)
             return []
@@ -53,6 +50,22 @@ def collect(since_iso: str, run_id: Optional[str] = None) -> List[Dict[str, Any]
         else:
             inner = raw.get("events", []) if isinstance(raw, dict) else []
             events = [e for e in inner if isinstance(e, dict)]
+
+        if oc_session:
+            # Build openclaw run_id → oc_session map from events that have both fields.
+            # llm_response events carry session_id; tool call events share the same run_id.
+            run_id_to_session: dict[str, str] = {}
+            for e in events:
+                if e.get("run_id") and e.get("session_id"):
+                    run_id_to_session[e["run_id"]] = e["session_id"]
+
+            filtered = []
+            for e in events:
+                sid = e.get("session_id") or run_id_to_session.get(e.get("run_id", ""))
+                if sid == oc_session:
+                    filtered.append({**e, "session_id": sid})
+            events = filtered
+
         log.info("[event_forwarder] Collected %d events", len(events))
         return events
     except Exception as exc:

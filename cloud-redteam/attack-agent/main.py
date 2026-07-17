@@ -82,6 +82,34 @@ def run_attack(payload: AttackPayload):
 
 # ── Core attack logic ──────────────────────────────────────────────
 
+def _collect_with_polling(
+    before_ts: str,
+    run_id: str,
+    oc_session: str | None = None,
+    stable_checks: int = 2,
+    interval: float = 0.5,
+    timeout: float = 15.0,
+) -> list:
+    deadline = time.time() + timeout
+    last_count = -1
+    stable = 0
+    while time.time() < deadline:
+        events = event_forwarder.collect(before_ts, run_id=run_id, oc_session=oc_session)
+        if len(events) == last_count:
+            stable += 1
+            if stable >= stable_checks:
+                log.info("[collect_polling] stable at %d events after %.1fs",
+                         len(events), timeout - (deadline - time.time()))
+                return events
+        else:
+            stable = 0
+            last_count = len(events)
+        time.sleep(interval)
+    events = event_forwarder.collect(before_ts, run_id=run_id, oc_session=oc_session)
+    log.warning("[collect_polling] timeout reached, returning %d events", len(events))
+    return events
+
+
 def _execute_attack(payload: AttackPayload) -> None:
     _run_agent_attack(payload)
 
@@ -94,13 +122,14 @@ def _run_agent_attack(payload: AttackPayload) -> None:
     if payload.injected_instruction:
         message = f"{message}\n\n{payload.injected_instruction}"
 
+    raw_session = payload.openclaw_session_id or payload.scenario_key
+    oc_session = raw_session.replace(" ", "-")
+
     before_ts = datetime.now(timezone.utc).isoformat()
     log.info("[%s] Starting attack: %s…", session_id, message[:80])
 
     # Register this attack's run_id with the observer so all events are tagged
-    event_forwarder.start_run(session_id)
-
-    oc_session = payload.openclaw_session_id or payload.scenario_key
+    event_forwarder.start_run(session_id, oc_session)
 
     # Clear stale openclaw session history so the model starts fresh each run
     session_file = pathlib.Path.home() / ".openclaw" / "agents" / "main" / "sessions" / f"{oc_session}.jsonl"
@@ -116,9 +145,8 @@ def _run_agent_attack(payload: AttackPayload) -> None:
     else:
         log.info("[%s] openclaw exit=0", session_id)
 
-    time.sleep(2)
-    event_forwarder.end_run()
-    events = event_forwarder.collect(before_ts, run_id=session_id)
+    events = _collect_with_polling(before_ts, run_id=session_id, oc_session=oc_session)
+    event_forwarder.end_run(oc_session)
 
     # Detect Azure content filter blocks and inject a synthetic event so evaluators
     # can distinguish "filter blocked it" from "nothing happened"

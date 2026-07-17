@@ -129,10 +129,8 @@ if (-not (Test-Path $OpenclawJson)) {
     if (-not $cfg.PSObject.Properties['plugins']) {
         $cfg | Add-Member -MemberType NoteProperty -Name 'plugins' -Value ([PSCustomObject]@{})
     }
-    if (-not $cfg.plugins.PSObject.Properties['allow']) {
-        $cfg.plugins | Add-Member -MemberType NoteProperty -Name 'allow' -Value @()
-    }
-    if ($cfg.plugins.allow -notcontains 'redteam-observer') {
+    # Only add to allow-list if it already exists; if absent, OpenClaw permits all entries implicitly
+    if ($cfg.plugins.PSObject.Properties['allow'] -and $cfg.plugins.allow -notcontains 'redteam-observer') {
         $cfg.plugins.allow += 'redteam-observer'
     }
     if (-not $cfg.plugins.PSObject.Properties['entries']) {
