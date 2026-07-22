@@ -148,6 +148,11 @@ def _run_agent_attack(payload: AttackPayload) -> None:
     events = _collect_with_polling(before_ts, run_id=session_id, oc_session=oc_session)
     event_forwarder.end_run(oc_session)
 
+    eval_events = event_forwarder.filter_for_evaluation(events)
+    if len(eval_events) != len(events):
+        log.info("[%s] Pre-eval filter: %d → %d events (removed %d startup/config reads)",
+                 session_id, len(events), len(eval_events), len(events) - len(eval_events))
+
     # Detect Azure content filter blocks and inject a synthetic event so evaluators
     # can distinguish "filter blocked it" from "nothing happened"
     _FILTER_KEYWORDS = ("content_filter", "ContentPolicyViolation",
@@ -166,7 +171,7 @@ def _run_agent_attack(payload: AttackPayload) -> None:
 
     log.info("[%s] Collected %d events", session_id, len(events))
 
-    status = event_forwarder.forward(session_id, events, AGENT_API_KEY)
+    status = event_forwarder.forward(session_id, eval_events, AGENT_API_KEY)
     if status:
         log.info("[cloud] Events forwarded: %s", status)
 

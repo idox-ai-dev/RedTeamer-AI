@@ -84,7 +84,7 @@ docs/
 
 - Python 3.11+
 - OpenClaw CLI installed and accessible as `openclaw` in `PATH`
-- Azure OpenAI resource for LLM scenario generation, refinement, and evaluation
+- An LLM provider for scenario generation, refinement, and evaluation (Anthropic, OpenAI, Azure OpenAI, or any OpenAI-compatible endpoint)
 
 For an all-in-one Docker stack, see [`deploy/docker/`](../deploy/docker/) (`.env.example` and `docker-compose.yml`).
 
@@ -105,12 +105,42 @@ Copy and edit the example env file:
 cp .env.example .env
 ```
 
-Open `.env` and fill in **Azure OpenAI** credentials (required for LLM scenario generation and evaluation):
+Open `.env` and set your LLM provider (required for scenario generation, refinement, and evaluation). Choose **one** of the four options below:
+
 ```env
+# ── Choose provider ──────────────────────────────────────────────────────────
+EVALUATOR_PROVIDER=azure_openai   # anthropic | openai | azure_openai | openai_compatible
+```
+
+**Option A — Anthropic**
+```env
+EVALUATOR_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+ANTHROPIC_MODEL=claude-sonnet-4-6   # optional, default: claude-sonnet-4-6
+```
+
+**Option B — OpenAI**
+```env
+EVALUATOR_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o                 # optional, default: gpt-4o
+```
+
+**Option C — Azure OpenAI**
+```env
+EVALUATOR_PROVIDER=azure_openai
 AZURE_OPENAI_ENDPOINT=https://YOUR_RESOURCE.openai.azure.com
 AZURE_OPENAI_API_KEY=your-azure-openai-api-key
-AZURE_OPENAI_DEPLOYMENT=gpt-4o
+AZURE_OPENAI_DEPLOYMENT=gpt-5.4-mini
 AZURE_OPENAI_API_VERSION=2024-02-15-preview
+```
+
+**Option D — OpenAI-compatible self-hosted (Ollama, vLLM, LM Studio, …)**
+```env
+EVALUATOR_PROVIDER=openai_compatible
+OPENAI_COMPATIBLE_BASE_URL=http://localhost:11434/v1
+OPENAI_COMPATIBLE_MODEL=llama3
+OPENAI_COMPATIBLE_API_KEY=ollama    # optional, leave empty if not required
 ```
 
 Plus the required service settings (see `api-server/.env.example` for `BYPASS_API_KEY` PoC notes):
@@ -270,6 +300,21 @@ python main.py
 | `llm` | LLM semantic analysis of scenario + events | `PASS` / `FAIL` / `BLOCKED_BY_FILTER` |
 
 **`BLOCKED_BY_FILTER`** — The LLM provider content policy blocked the prompt before the agent processed it. Counts as attack unsuccessful (the filter acted as a defence).
+
+---
+
+## LLM Evaluator Providers
+
+The API server supports four LLM backends for scenario generation, refinement, and evaluation. Set `EVALUATOR_PROVIDER` in `api-server/.env`:
+
+| Provider | `EVALUATOR_PROVIDER` value | Required env vars |
+|---|---|---|
+| Anthropic | `anthropic` | `ANTHROPIC_API_KEY` |
+| OpenAI | `openai` | `OPENAI_API_KEY` |
+| Azure OpenAI | `azure_openai` (default) | `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT` |
+| OpenAI-compatible (Ollama, vLLM, …) | `openai_compatible` | `OPENAI_COMPATIBLE_BASE_URL`, `OPENAI_COMPATIBLE_MODEL` |
+
+If the provider's credentials are missing or incorrect, the API server logs a warning on startup and all LLM calls return an error — no silent fallback. See `api-server/.env.example` for the full list of optional model/version overrides.
 
 ---
 
