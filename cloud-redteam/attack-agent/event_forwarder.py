@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import pathlib
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -12,6 +13,12 @@ CLOUD_API_URL = os.environ.get("CLOUD_API_URL", "http://localhost:8000")
 
 log = logging.getLogger(__name__)
 
+# Known openclaw startup config files — never relevant to security evaluation.
+_STARTUP_CONFIG_FILES = frozenset({
+    "USER.md", "MEMORY.md", "CLAUDE.md", "CLAUDE.local.md",
+    "settings.json", "settings.local.json",
+})
+
 
 def clear_events() -> None:
     try:
@@ -21,9 +28,13 @@ def clear_events() -> None:
 
 
 def start_run(run_id: str, oc_session: str) -> None:
-    log.info("[event_forwarder] Starting run: %s (oc_session=%s) → %s/run/start", run_id, oc_session, OBSERVER_URL)
+    log.info("[event_forwarder] Starting run: %s (oc_session=%s)", run_id, oc_session)
     try:
-        requests.post(f"{OBSERVER_URL}/run/start", json={"run_id": run_id, "oc_session": oc_session}, timeout=5)
+        requests.post(
+            f"{OBSERVER_URL}/run/start",
+            json={"run_id": run_id, "oc_session": oc_session},
+            timeout=5,
+        )
         log.info("[event_forwarder] Run started: %s", run_id)
     except Exception as exc:
         log.error("[event_forwarder] start_run error: %s", exc)
@@ -40,7 +51,10 @@ def end_run(oc_session: str) -> None:
 def collect(since_iso: str, run_id: Optional[str] = None, oc_session: Optional[str] = None) -> List[Dict[str, Any]]:
     log.info("[event_forwarder] Collecting events from %s since=%s oc_session=%s", OBSERVER_URL, since_iso, oc_session)
     try:
-        r = requests.get(f"{OBSERVER_URL}/events?since={since_iso}", timeout=8)
+        # Use params dict so requests URL-encodes '+00:00' → '%2B00%3A00'.
+        # Manual string interpolation leaves '+' unencoded, which the server's
+        # url.searchParams.get() interprets as a space → NaN timestamp → no filtering.
+        r = requests.get(f"{OBSERVER_URL}/events", params={"since": since_iso}, timeout=8)
         if not r.ok:
             log.warning("[event_forwarder] Collect returned HTTP %d", r.status_code)
             return []
@@ -52,8 +66,9 @@ def collect(since_iso: str, run_id: Optional[str] = None, oc_session: Optional[s
             events = [e for e in inner if isinstance(e, dict)]
 
         if oc_session:
-            # Build openclaw run_id → oc_session map from events that have both fields.
-            # llm_response events carry session_id; tool call events share the same run_id.
+            # Build openclaw run_id → oc_session map from events that carry both.
+            # tool-call events have session_id=null in the hook payload so they are
+            # attributed via this map instead of directly.
             run_id_to_session: dict[str, str] = {}
             for e in events:
                 if e.get("run_id") and e.get("session_id"):
@@ -71,6 +86,21 @@ def collect(since_iso: str, run_id: Optional[str] = None, oc_session: Optional[s
     except Exception as exc:
         log.error("[event_forwarder] collect error: %s", exc)
         return []
+
+
+def filter_for_evaluation(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Remove openclaw startup/config reads that are never relevant to security evaluation."""
+    filtered = []
+    for e in events:
+        if e.get("tool_name") == "read":
+            path = str(
+                e.get("tool_args", {}).get("file_path", "")
+                or e.get("tool_args", {}).get("path", "")
+            )
+            if pathlib.Path(path).name in _STARTUP_CONFIG_FILES:
+                continue
+        filtered.append(e)
+    return filtered
 
 
 def forward(session_id: str, events: List[Dict[str, Any]], api_key: str) -> int:
